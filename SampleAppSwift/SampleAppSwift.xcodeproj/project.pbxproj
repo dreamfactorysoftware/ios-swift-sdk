@@ -9,6 +9,9 @@
 /* Begin PBXBuildFile section */
 		824512211C3B76A6000EF52E /* GroupAddViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 824512201C3B76A6000EF52E /* GroupAddViewController.swift */; };
 		824512231C3B76C9000EF52E /* ContactListViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 824512221C3B76C9000EF52E /* ContactListViewController.swift */; };
+		824512251C3BCC6E000EF52E /* ContactViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 824512241C3BCC6E000EF52E /* ContactViewController.swift */; };
+		824512271C3BF40A000EF52E /* ContactEditViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 824512261C3BF40A000EF52E /* ContactEditViewController.swift */; };
+		824512291C3BF6E4000EF52E /* ProfileImagePickerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 824512281C3BF6E4000EF52E /* ProfileImagePickerViewController.swift */; };
 		82B39FF81C3A5B4600D4F23F /* CustomNavBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82B39FF71C3A5B4600D4F23F /* CustomNavBar.swift */; };
 		82B39FFD1C3A9B7300D4F23F /* ContactInfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82B39FFC1C3A9B7300D4F23F /* ContactInfoView.swift */; };
 		82B39FFF1C3AA42E00D4F23F /* MasterViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82B39FFE1C3AA42E00D4F23F /* MasterViewController.swift */; };
@@ -28,6 +31,9 @@
 /* Begin PBXFileReference section */
 		824512201C3B76A6000EF52E /* GroupAddViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GroupAddViewController.swift; sourceTree = "<group>"; };
 		824512221C3B76C9000EF52E /* ContactListViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContactListViewController.swift; sourceTree = "<group>"; };
+		824512241C3BCC6E000EF52E /* ContactViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContactViewController.swift; sourceTree = "<group>"; };
+		824512261C3BF40A000EF52E /* ContactEditViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContactEditViewController.swift; sourceTree = "<group>"; };
+		824512281C3BF6E4000EF52E /* ProfileImagePickerViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProfileImagePickerViewController.swift; sourceTree = "<group>"; };
 		82B39FF71C3A5B4600D4F23F /* CustomNavBar.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CustomNavBar.swift; sourceTree = "<group>"; };
 		82B39FFC1C3A9B7300D4F23F /* ContactInfoView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContactInfoView.swift; sourceTree = "<group>"; };
 		82B39FFE1C3AA42E00D4F23F /* MasterViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MasterViewController.swift; sourceTree = "<group>"; };
@@ -97,6 +103,9 @@
 				82B3A0021C3AA70D00D4F23F /* AddressBookViewController.swift */,
 				824512201C3B76A6000EF52E /* GroupAddViewController.swift */,
 				824512221C3B76C9000EF52E /* ContactListViewController.swift */,
+				824512241C3BCC6E000EF52E /* ContactViewController.swift */,
+				824512261C3BF40A000EF52E /* ContactEditViewController.swift */,
+				824512281C3BF6E4000EF52E /* ProfileImagePickerViewController.swift */,
 			);
 			path = Controller;
 			sourceTree = "<group>";
@@ -201,12 +210,15 @@
 			buildActionMask = 2147483647;
 			files = (
 				824512211C3B76A6000EF52E /* GroupAddViewController.swift in Sources */,
+				824512251C3BCC6E000EF52E /* ContactViewController.swift in Sources */,
+				824512291C3BF6E4000EF52E /* ProfileImagePickerViewController.swift in Sources */,
 				82B3A0031C3AA70D00D4F23F /* AddressBookViewController.swift in Sources */,
 				82D0A1111C39C9B600DC41FB /* GroupRecord.swift in Sources */,
 				82B3A0011C3AA6EE00D4F23F /* RegisterViewController.swift in Sources */,
 				82D0A10D1C39ADCC00DC41FB /* NIKApiInvoker.swift in Sources */,
 				82D0A0F41C39986000DC41FB /* AppDelegate.swift in Sources */,
 				824512231C3B76C9000EF52E /* ContactListViewController.swift in Sources */,
+				824512271C3BF40A000EF52E /* ContactEditViewController.swift in Sources */,
 				82B39FFD1C3A9B7300D4F23F /* ContactInfoView.swift in Sources */,
 				82D0A10F1C39B9BA00DC41FB /* NIKFile.swift in Sources */,
 				82B39FFF1C3AA42E00D4F23F /* MasterViewController.swift in Sources */,

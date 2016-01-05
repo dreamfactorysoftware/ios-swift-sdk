@@ -42,7 +42,7 @@ class RegisterViewController: UIViewController {
             let restApiPath = "\(baseUrl)/\(resourceName)"
             NSLog("\n\(restApiPath)\n")
             
-            let queryParams: [String: AnyObject] = ["login": NSNumber(bool: true)]
+            let queryParams: [String: AnyObject] = ["login": NSNumber(bool: true).stringValue]
             let headerParams = ["X-DreamFactory-Api-Key": kApiKey]
             let contentType = "application/json"
             let requestBody: AnyObject = ["email": emailTextField.text!,
