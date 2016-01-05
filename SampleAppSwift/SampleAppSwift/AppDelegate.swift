@@ -19,7 +19,6 @@ let kUserEmail = "UserEmail"
 let kPassword = "UserPassword"
 let kContainerName = "profile_images"
 
-
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
@@ -67,7 +66,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func applicationWillTerminate(application: UIApplication) {
         // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
     }
+}
 
-
+extension UIViewController {
+    var navBar: CustomNavBar {
+        let appDelegate = UIApplication.sharedApplication().delegate as! AppDelegate
+        return appDelegate.globalToolBar
+    }
 }
 

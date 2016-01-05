@@ -8,10 +8,18 @@
 
 import UIKit
 
+typealias JSON = [String: AnyObject]
+typealias JSONArray = [JSON]
+
 /**
  Group model
 */
-struct GroupRecord {
+class GroupRecord {
     let id: NSNumber
-    let name: String
+    var name: String
+    
+    init(json: JSON) {
+        id = json["id"] as! NSNumber
+        name = json["name"] as! String
+    }
 }

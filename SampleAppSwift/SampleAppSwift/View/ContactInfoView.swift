@@ -65,7 +65,7 @@ class ContactInfoView: UIView {
     }
     
     private func putFieldIn(value: String, key: String) {
-        if value.characters.count > 0 {
+        if !value.isEmpty {
             textFields[key]?.text = value
         } else {
             textFields[key]?.text = ""

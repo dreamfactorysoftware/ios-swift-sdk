@@ -52,7 +52,7 @@ class CustomNavBar: UIToolbar {
         addButton = UIButton(type: .System)
         addButton.frame = CGRectMake(frame.size.width * 0.85, 20, 50, 40)
         addButton.setTitleColor(UIColor(red: 107/255.0, green: 170/255.0, blue: 178/255.0, alpha: 1.0), forState: .Normal)
-        addButton.titleLabel?.font = UIFont(name: "HelveticaNeue-Regular", size: 30.0)
+        addButton.titleLabel?.font = UIFont(name: "Helvetica Neue", size: 30.0)
         addButton.setTitle("+", forState: .Normal)
         addButton.center = CGPointMake(frame.size.width * 0.82, 38)
         addSubview(addButton)

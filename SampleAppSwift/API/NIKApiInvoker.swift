@@ -26,9 +26,8 @@ final class NIKApiInvoker {
         NIKApiInvoker.__LoadingObjectsCount += countDelta
         NIKApiInvoker.__LoadingObjectsCount = NIKApiInvoker.__LoadingObjectsCount < 0 ? 0 : NIKApiInvoker.__LoadingObjectsCount
         
-#if (arch(i386) || arch(x86_64)) && os(iOS)
         UIApplication.sharedApplication().networkActivityIndicatorVisible = NIKApiInvoker.__LoadingObjectsCount > 0
-#endif
+        
         objc_sync_exit(self)
     }
     
@@ -84,20 +83,22 @@ final class NIKApiInvoker {
         let date = NSDate()
         NSURLConnection.sendAsynchronousRequest(request, queue: queue) {(response, response_data, var response_error) -> Void in
             self.stopLoad()
-            let statusCode = (response as! NSHTTPURLResponse).statusCode
             if response_error != nil {
                 completionBlock(nil, response_error)
                 return
-            } else if !NSLocationInRange(statusCode, NSMakeRange(200, 99)) {
-                response_error = NSError(domain: "swagger", code: statusCode, userInfo: try! NSJSONSerialization.JSONObjectWithData(response_data!, options: []) as? [NSObject: AnyObject])
-                completionBlock(nil, response_error)
-                return
             } else {
-                let results = try! NSJSONSerialization.JSONObjectWithData(response_data!, options: []) as! [String: AnyObject]
-                if NSUserDefaults.standardUserDefaults().boolForKey("RVBLogging") {
-                    NSLog("fetched results (\(NSDate().timeIntervalSinceDate(date)) seconds): \(results)")
+                let statusCode = (response as! NSHTTPURLResponse).statusCode
+                if !NSLocationInRange(statusCode, NSMakeRange(200, 99)) {
+                    response_error = NSError(domain: "swagger", code: statusCode, userInfo: try! NSJSONSerialization.JSONObjectWithData(response_data!, options: []) as? [NSObject: AnyObject])
+                    completionBlock(nil, response_error)
+                    return
+                } else {
+                    let results = try! NSJSONSerialization.JSONObjectWithData(response_data!, options: []) as! [String: AnyObject]
+                    if NSUserDefaults.standardUserDefaults().boolForKey("RVBLogging") {
+                        NSLog("fetched results (\(NSDate().timeIntervalSinceDate(date)) seconds): \(results)")
+                    }
+                    completionBlock(results, nil)
                 }
-                completionBlock(results, nil)
             }
         }
     }
@@ -155,7 +156,7 @@ final class NIKRequestBuilder {
                 data = body.dataUsingEncoding(NSUTF8StringEncoding)
             }
             let postLength = "\(data.length)"
-            request.setValue(postLength, forKey: "Content-Length")
+            request.setValue(postLength, forHTTPHeaderField: "Content-Length")
             request.HTTPBody = data
             request.setValue(contentType, forHTTPHeaderField: "Content-Type")
         }
