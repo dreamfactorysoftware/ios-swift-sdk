@@ -125,7 +125,6 @@ class GroupAddViewController: UIViewController, UITableViewDataSource, UITableVi
                 self.waitLock.wait()
             }
             self.waitLock.unlock()
-            self.waitLock.signal()
         }
     }
     
@@ -349,8 +348,8 @@ class GroupAddViewController: UIViewController, UITableViewDataSource, UITableVi
                     
                     dispatch_async(dispatch_get_main_queue()) {
                         self.waitReady = true
-                        self.waitLock.unlock()
                         self.waitLock.signal()
+                        self.waitLock.unlock()
                         
                         self.groupAddTableView.reloadData()
                     }

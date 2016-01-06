@@ -66,7 +66,6 @@ class ContactListViewController: UITableViewController, UISearchBarDelegate {
         didPrefetch = false
         
         let navBar = self.navBar
-        navBar.showDone()
         navBar.addButton.addTarget(self, action: "onAddButtonClick", forControlEvents: .TouchDown)
         navBar.editButton.addTarget(self, action: "onEditButtonClick", forControlEvents: .TouchDown)
         navBar.showEditAndAdd()
@@ -117,7 +116,6 @@ class ContactListViewController: UITableViewController, UISearchBarDelegate {
         while !viewReady {
             viewLock.wait()
         }
-        
         viewLock.unlock()
     }
     
@@ -214,7 +212,6 @@ class ContactListViewController: UITableViewController, UISearchBarDelegate {
         contactViewController = self.storyboard?.instantiateViewControllerWithIdentifier("ContactViewController") as? ContactViewController
         contactViewController!.contactRecord = record
         contactViewController!.prefetch()
-        contactViewController!.didPrecall = true
     }
     
     override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
@@ -396,8 +393,8 @@ class ContactListViewController: UITableViewController, UISearchBarDelegate {
                     dispatch_async(dispatch_get_main_queue()) {
                         if !self.viewReady {
                             self.viewReady = true
-                            self.viewLock.unlock()
                             self.viewLock.signal()
+                            self.viewLock.unlock()
                         } else {
                             self.tableView.reloadData()
                         }

@@ -11,7 +11,7 @@ import UIKit
 /**
  Contact info model
  */
-struct ContactDetailRecord {
+class ContactDetailRecord {
     let id: NSNumber
     var type: String
     var phone: String
@@ -22,4 +22,17 @@ struct ContactDetailRecord {
     var city: String
     var address: String
     let contactId: NSNumber
+    
+    init(json: JSON) {
+        id = json["id"] as! NSNumber
+        address = json.nonNull("address")
+        city = json.nonNull("city")
+        country = json.nonNull("country")
+        email = json.nonNull("email")
+        state = json.nonNull("state")
+        zipCode = json.nonNull("zip")
+        type = json.nonNull("info_type")
+        phone = json.nonNull("phone")
+        contactId = json["contact_id"] as! NSNumber
+    }
 }
