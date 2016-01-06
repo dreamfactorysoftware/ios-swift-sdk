@@ -12,16 +12,19 @@ import UIKit
  Contact info model
  */
 class ContactDetailRecord {
-    let id: NSNumber
-    var type: String
-    var phone: String
-    var email: String
-    var state: String
-    var zipCode: String
-    var country: String
-    var city: String
-    var address: String
-    let contactId: NSNumber
+    var id: NSNumber!
+    var type: String!
+    var phone: String!
+    var email: String!
+    var state: String!
+    var zipCode: String!
+    var country: String!
+    var city: String!
+    var address: String!
+    var contactId: NSNumber!
+    
+    init() {
+    }
     
     init(json: JSON) {
         id = json["id"] as! NSNumber

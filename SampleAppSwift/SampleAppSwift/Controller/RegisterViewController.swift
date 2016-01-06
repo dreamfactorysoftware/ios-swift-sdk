@@ -72,7 +72,7 @@ class RegisterViewController: UIViewController {
             })
         } else {
             let alert = UIAlertController(title: nil, message: "Error, invalid password", preferredStyle: .Alert)
-            alert.addAction(UIAlertAction(title: "ok", style: .Default, handler: nil))
+            alert.addAction(UIAlertAction(title: "OK", style: .Default, handler: nil))
             presentViewController(alert, animated: true, completion: nil)
         }
     }

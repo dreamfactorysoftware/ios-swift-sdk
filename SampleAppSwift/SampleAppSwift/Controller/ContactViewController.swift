@@ -435,9 +435,9 @@ class ContactViewController: UIViewController {
             NSLog("\nAPI path: \(restApiPath)\n")
             
             // request a download from the file
-            let queryParams: [String: AnyObject] = ["include_properties": "true",
-                                                    "content": "true",
-                                                    "download": "true"]
+            let queryParams: [String: AnyObject] = ["include_properties": "1",
+                                                    "content": "1",
+                                                    "download": "1"]
             
             let headerParams = ["X-DreamFactory-Api-Key": kApiKey,
                 "X-DreamFactory-Session-Token": swgSessionToken!]

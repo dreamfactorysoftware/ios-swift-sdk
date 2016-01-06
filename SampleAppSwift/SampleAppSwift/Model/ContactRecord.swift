@@ -24,9 +24,9 @@ extension Dictionary {
  Contact model
  */
 class ContactRecord: Equatable {
-    let id: NSNumber
-    var firstName: String
-    var lastName: String
+    var id: NSNumber!
+    var firstName: String!
+    var lastName: String!
     var notes: String!
     var skype: String!
     var twitter: String!
@@ -34,6 +34,10 @@ class ContactRecord: Equatable {
     
     var fullName: String {
         return "\(firstName) \(lastName)"
+    }
+    
+    init() {
+        
     }
     
     init(json: JSON) {

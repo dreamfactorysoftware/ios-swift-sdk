@@ -9,7 +9,11 @@
 import UIKit
 
 class ContactInfoView: UIView {
-    var record: ContactDetailRecord!
+    var record: ContactDetailRecord! {
+        didSet {
+            updateFields()
+        }
+    }
     private var textFields: [String: UITextField]!
     
     override init(frame: CGRect) {
@@ -31,20 +35,6 @@ class ContactInfoView: UIView {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func updateFields() {
-        putFieldIn(record.type, key: "Type")
-        putFieldIn(record.phone, key: "Phone")
-        putFieldIn(record.email, key: "Email")
-        putFieldIn(record.address, key: "Address")
-        putFieldIn(record.city, key: "City")
-        putFieldIn(record.state, key: "State")
-        putFieldIn(record.zipCode, key: "Zip")
-        putFieldIn(record.country, key: "Country")
-        
-        reloadInputViews()
-        setNeedsDisplay()
-    }
-    
     func updateRecord() {
         record.type = textValueForKey("Type")
         record.phone = textValueForKey("Phone")
@@ -58,6 +48,20 @@ class ContactInfoView: UIView {
     
     func buildToDiciontary() -> [String: AnyObject] {
         return [:]
+    }
+    
+    private func updateFields() {
+        putFieldIn(record.type, key: "Type")
+        putFieldIn(record.phone, key: "Phone")
+        putFieldIn(record.email, key: "Email")
+        putFieldIn(record.address, key: "Address")
+        putFieldIn(record.city, key: "City")
+        putFieldIn(record.state, key: "State")
+        putFieldIn(record.zipCode, key: "Zip")
+        putFieldIn(record.country, key: "Country")
+        
+        reloadInputViews()
+        setNeedsDisplay()
     }
     
     private func textValueForKey(key: String) -> String {
@@ -80,7 +84,7 @@ class ContactInfoView: UIView {
         for field in names {
             let textField = UITextField(frame: CGRectMake(frame.size.width * 0.05, y, frame.size.width * 0.9, 35))
             textField.placeholder = field
-            textField.font = UIFont(name: "HelveticaNeue-Regular", size: 20.0)
+            textField.font = UIFont(name: "Helvetica Neue", size: 20.0)
             textField.backgroundColor = UIColor.whiteColor()
             textField.layer.cornerRadius = 5
             addSubview(textField)

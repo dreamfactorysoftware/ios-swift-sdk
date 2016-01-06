@@ -8,10 +8,26 @@
 
 import UIKit
 
-class ProfileImagePickerViewController: UIViewController {
+protocol ProfileImagePickerDelegate: class {
+    
+}
 
+class ProfileImagePickerViewController: UIViewController {
+    @IBOutlet var tableView: UITableView!
+    @IBOutlet var imageNameTextField: UITextField!
+    
+    // set only when editing an existing contact
+    // the contact we are choosing a profile image for
+    var record: ContactRecord!
+    
+    weak var delegate: ProfileImagePickerDelegate?
+    
     override func viewDidLoad() {
         super.viewDidLoad()
 
+    }
+    
+    @IBAction func onChooseImageClick() {
+        
     }
 }

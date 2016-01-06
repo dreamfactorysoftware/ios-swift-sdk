@@ -13,8 +13,14 @@ import UIKit
  in as the body of the request to ensure that the file is built
  and sent up properly, especially with images.
 */
-struct NIKFile {
+class NIKFile {
     let name: String
     let mimeType: String
     let data: NSData
+    
+    init(name: String, mimeType: String, data: NSData) {
+        self.name = name
+        self.mimeType = mimeType
+        self.data = data
+    }
 }

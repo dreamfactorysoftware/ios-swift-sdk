@@ -346,7 +346,7 @@
                                     </userDefinedRuntimeAttribute>
                                 </userDefinedRuntimeAttributes>
                                 <connections>
-                                    <action selector="ChooseLocalActionEvent:" destination="AVr-4i-Laq" eventType="touchUpInside" id="WHX-It-Ocf"/>
+                                    <action selector="onChooseImageClick" destination="AVr-4i-Laq" eventType="touchUpInside" id="7TE-pm-glw"/>
                                 </connections>
                             </button>
                             <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="Image Name" textAlignment="center" minimumFontSize="17" id="i8R-x9-EpP">
@@ -365,8 +365,8 @@
                         <color key="backgroundColor" red="0.99607843137254903" green="0.99607843137254903" blue="0.99607843137254903" alpha="1" colorSpace="calibratedRGB"/>
                     </view>
                     <connections>
-                        <outlet property="imageListTableView" destination="6r1-Mc-bNJ" id="pr7-PR-2wU"/>
                         <outlet property="imageNameTextField" destination="i8R-x9-EpP" id="ea8-NM-iVJ"/>
+                        <outlet property="tableView" destination="6r1-Mc-bNJ" id="pkd-EW-pKQ"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="g0q-Hs-ADL" userLabel="First Responder" sceneMemberID="firstResponder"/>
