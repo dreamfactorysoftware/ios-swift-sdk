@@ -8,7 +8,7 @@
 
 import UIKit
 
-class ContactEditViewController: UIViewController {
+class ContactEditViewController: UIViewController, ProfileImagePickerDelegate {
     @IBOutlet weak var contactEditScrollView: UIScrollView!
     
     weak var contactViewController: ContactViewController?
@@ -136,7 +136,26 @@ class ContactEditViewController: UIViewController {
     }
     
     func onChangeImageClick() {
+        let profileImagePickerViewController = self.storyboard?.instantiateViewControllerWithIdentifier("ProfileImagePickerViewController") as! ProfileImagePickerViewController
+        profileImagePickerViewController.delegate = self
+        profileImagePickerViewController.record = contactRecord!
         
+        self.navigationController?.pushViewController(profileImagePickerViewController, animated: true)
+    }
+    
+    // Profile image picker delegate
+    
+    func didSelectItem(item: String) {
+        self.navigationController?.popViewControllerAnimated(true)
+        // gets info passed back up from the image picker
+        self.contactRecord!.imageURL = item
+    }
+    
+    func didSelectItem(item: String, withImage image: UIImage) {
+        self.navigationController?.popViewControllerAnimated(true)
+        // gets info passed back up from the image picker
+        self.imageURL = item
+        self.profileImage = image
     }
     
     // MARK: - Private methods
@@ -160,6 +179,17 @@ class ContactEditViewController: UIViewController {
             putValueIn(contactRecord.notes, forKey: "Notes")
         }
         
+        let changeImageButton = UIButton(type: .System)
+        var y = CGRectGetMaxY(contactEditScrollView.subviews.last!.frame)
+        changeImageButton.frame = CGRectMake(0, y + 10, view.frame.size.width, 40)
+        changeImageButton.titleLabel?.textAlignment = .Center
+        changeImageButton.setTitle("Change image", forState: .Normal)
+        changeImageButton.titleLabel?.font = UIFont(name: "Helvetica Neue", size: 20.0)
+        changeImageButton.setTitleColor(UIColor(red: 107/255.0, green: 170/255.0, blue: 178/255.0, alpha: 1.0), forState: .Normal)
+        
+        changeImageButton.addTarget(self, action: "onChangeImageClick", forControlEvents: .TouchUpInside)
+        //contactEditScrollView.addSubview(changeImageButton)
+        
         // add all the contact info views
         if let contactDetails = contactDetails {
             
@@ -174,7 +204,7 @@ class ContactEditViewController: UIViewController {
         }
         
         // create button to add a new address
-        let y = CGRectGetMaxY(contactEditScrollView.subviews.last!.frame)
+        y = CGRectGetMaxY(contactEditScrollView.subviews.last!.frame)
         let addButton = UIButton(type: .System)
         addButton.frame = CGRectMake(0, y + 10, view.frame.size.width, 40)
         addButton.backgroundColor = UIColor(red: 107/255.0, green: 170/255.0, blue: 178/255.0, alpha: 1.0)

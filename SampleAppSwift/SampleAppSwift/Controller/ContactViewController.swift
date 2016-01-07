@@ -139,13 +139,13 @@ class ContactViewController: UIViewController {
         
         var next_y: CGFloat = 40 // track where the lowest item is
         if !record.email.isEmpty {
-            let label = UILabel(frame: CGRectMake(75, 40, subView.frame.size.width - 75, 30))
+            let label = UILabel(frame: CGRectMake(50, 40, subView.frame.size.width - 50, 30))
             label.text = record.email
             label.font = UIFont(name: "HelveticaNeue-Light", size: 20.0)
             label.textColor = UIColor(red: 249/255.0, green: 249/255.0, blue: 249/255.0, alpha: 1.0)
             subView.addSubview(label)
             
-            let imageView = UIImageView(frame: CGRectMake(50, 45, 20, 20))
+            let imageView = UIImageView(frame: CGRectMake(25, 45, 20, 20))
             imageView.image = UIImage(named: "mail")
             imageView.contentMode = .ScaleAspectFit
             subView.addSubview(imageView)
@@ -154,13 +154,13 @@ class ContactViewController: UIViewController {
         }
         
         if !record.phone.isEmpty {
-            let label = UILabel(frame: CGRectMake(75, next_y, subView.frame.size.width - 75, 20))
+            let label = UILabel(frame: CGRectMake(50, next_y, subView.frame.size.width - 50, 20))
             label.text = record.phone
             label.font = UIFont(name: "HelveticaNeue-Light", size: 20.0)
             label.textColor = UIColor(red: 253/255.0, green: 253/255.0, blue: 250/255.0, alpha: 1.0)
             subView.addSubview(label)
             
-            let imageView = UIImageView(frame: CGRectMake(50, next_y, 20, 20))
+            let imageView = UIImageView(frame: CGRectMake(25, next_y, 20, 20))
             imageView.image = UIImage(named: "phone1")
             imageView.contentMode = .ScaleAspectFit
             subView.addSubview(imageView)
@@ -169,7 +169,7 @@ class ContactViewController: UIViewController {
         }
         
         if !record.address.isEmpty && !record.city.isEmpty && !record.state.isEmpty && !record.zipCode.isEmpty {
-            let label = UILabel(frame: CGRectMake(75, next_y, subView.frame.size.width - 75, 20))
+            let label = UILabel(frame: CGRectMake(50, next_y, subView.frame.size.width - 50, 20))
             label.font = UIFont(name: "HelveticaNeue-Light", size: 19.0)
             label.numberOfLines = 0
             label.textColor = UIColor(red: 250/255.0, green: 250/255.0, blue: 250/255.0, alpha: 1.0)
@@ -182,7 +182,7 @@ class ContactViewController: UIViewController {
             label.sizeToFit()
             subView.addSubview(label)
             
-            let imageView = UIImageView(frame: CGRectMake(50, next_y, 20, 20))
+            let imageView = UIImageView(frame: CGRectMake(25, next_y, 20, 20))
             imageView.image = UIImage(named: "home")
             imageView.contentMode = .ScaleAspectFit
             subView.addSubview(imageView)
@@ -193,8 +193,8 @@ class ContactViewController: UIViewController {
         // resize the subview
         var viewFrame = subView.frame
         viewFrame.size.height = next_y + 20
-        view.frame.origin.x = view.frame.size.width * 0.06
-        view.frame.size.width = view.frame.size.width * 0.88
+        viewFrame.origin.x = view.frame.size.width * 0.06
+        viewFrame.size.width = view.frame.size.width * 0.88
         subView.frame = viewFrame
         
         return subView
@@ -232,7 +232,6 @@ class ContactViewController: UIViewController {
     private func buildContactView() {
         viewLock.lock()
         while !viewReady {
-            NSThread.sleepForTimeInterval(0.0001)
             viewLock.wait()
         }
         viewLock.unlock()
@@ -242,7 +241,7 @@ class ContactViewController: UIViewController {
         }
         
         // clear out the view
-        dispatch_sync(dispatch_get_main_queue()) {
+        dispatch_async(dispatch_get_main_queue()) {
             for view in self.contactDetailScrollView.subviews {
                 view.removeFromSuperview()
             }
@@ -261,6 +260,9 @@ class ContactViewController: UIViewController {
             // add the name label
             let nameLabel = UILabel(frame: CGRectMake(0, y, self.view.frame.size.width, 35))
             nameLabel.text = self.contactRecord.fullName
+            nameLabel.font = UIFont(name: "HelveticaNeue-Light", size: 25.0)
+            nameLabel.textAlignment = .Center
+            self.contactDetailScrollView.addSubview(nameLabel)
             y += 40
             
             if !self.contactRecord.twitter.isEmpty {
@@ -318,10 +320,6 @@ class ContactViewController: UIViewController {
                 y += toAdd.frame.size.height + 25
                 self.contactDetailScrollView.addSubview(toAdd)
             }
-        }
-        
-        dispatch_sync(dispatch_get_main_queue()) {
-            self.contactDetailScrollView.reloadInputViews()
         }
         
         // wait until the group is ready to build group list subviews

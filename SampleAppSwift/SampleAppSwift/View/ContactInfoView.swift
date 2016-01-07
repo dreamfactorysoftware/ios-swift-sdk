@@ -47,7 +47,16 @@ class ContactInfoView: UIView {
     }
     
     func buildToDiciontary() -> [String: AnyObject] {
-        return [:]
+        return ["id": record.id,
+                "contact_id": record.contactId,
+                "info_type": record.type,
+                "phone": record.phone,
+                "email": record.email,
+                "address": record.address,
+                "city": record.city,
+                "state": record.state,
+                "zip": record.zipCode,
+                "country": record.country]
     }
     
     private func updateFields() {
