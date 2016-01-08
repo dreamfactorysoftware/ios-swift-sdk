@@ -24,7 +24,7 @@ final class NIKApiInvoker {
     private func updateLoadCountWithDelta(countDelta: Int) {
         objc_sync_enter(self)
         NIKApiInvoker.__LoadingObjectsCount += countDelta
-        NIKApiInvoker.__LoadingObjectsCount = NIKApiInvoker.__LoadingObjectsCount < 0 ? 0 : NIKApiInvoker.__LoadingObjectsCount
+        NIKApiInvoker.__LoadingObjectsCount = max(0, NIKApiInvoker.__LoadingObjectsCount)
         
         UIApplication.sharedApplication().networkActivityIndicatorVisible = NIKApiInvoker.__LoadingObjectsCount > 0
         

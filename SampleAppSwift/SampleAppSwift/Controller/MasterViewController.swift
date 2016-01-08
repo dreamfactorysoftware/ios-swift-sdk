@@ -17,22 +17,21 @@ class MasterViewController: UIViewController {
         super.viewDidLoad()
         
         // check if login credentials are already stored
-        let baseInstanceUrl = NSUserDefaults.standardUserDefaults().valueForKey(kBaseInstanceUrl) as? String
         let userEmail = NSUserDefaults.standardUserDefaults().valueForKey(kUserEmail) as? String
         let userPassword = NSUserDefaults.standardUserDefaults().valueForKey(kPassword) as? String
         
         emailTextField.setValue(UIColor(red: 180/255.0, green: 180/255.0, blue: 180/255.0, alpha: 1.0), forKeyPath: "_placeholderLabel.textColor")
         passwordTextField.setValue(UIColor(red: 180/255.0, green: 180/255.0, blue: 180/255.0, alpha: 1.0), forKeyPath: "_placeholderLabel.textColor")
         
-        if baseInstanceUrl?.characters.count > 0 && userEmail?.characters.count > 0 && userPassword?.characters.count > 0 {
+        if userEmail?.characters.count > 0 && userPassword?.characters.count > 0 {
             emailTextField.text = userEmail
             passwordTextField.text = userPassword
         }
         
-        navBar.backButton.addTarget(self, action: "hitBackButton", forControlEvents: .TouchDown)
+        navBar.backButton.addTarget(self, action: "onBackButtonClick", forControlEvents: .TouchDown)
     }
     
-    func hitBackButton() {
+    func onBackButtonClick() {
         self.navigationController?.popViewControllerAnimated(true)
     }
     
@@ -46,53 +45,36 @@ class MasterViewController: UIViewController {
         navBar.showDoneButton(false)
     }
     
-    @IBAction func RegisterActionEvent(sender: AnyObject) {
+    @IBAction func onRegisterClick(sender: AnyObject) {
         showRegisterViewController()
     }
     
-    @IBAction func SubmitActionEvent(sender: AnyObject) {
+    @IBAction func onSignInClick(sender: AnyObject) {
         self.view.endEditing(true)
         
         //log in using the generic API
         if emailTextField.text?.characters.count > 0 && passwordTextField.text?.characters.count > 0 {
             
-            // use the generic API invoker
-            let api = NIKApiInvoker.sharedInstance
-            let baseUrl = kBaseInstanceUrl // <base instance url>/api/v2
-            
-            // build rest path for request
-            let resourceName = "user/session"
-            let restApiPath = "\(baseUrl)/\(resourceName)"
-            NSLog("\n\(restApiPath)\n")
-            
-            let headerParams = ["X-DreamFactory-Api-Key": kApiKey]
-            let contentType = "application/json"
-            let requestBody: AnyObject = ["email": emailTextField.text!,
-                                          "password": passwordTextField.text!]
-            
-            api.restPath(restApiPath, method: "POST", queryParams: nil, body: requestBody, headerParams: headerParams, contentType: contentType, completionBlock: { (response, error) -> Void in
-                if let error = error {
-                    NSLog("Error logging in user: \(error)")
-                    dispatch_async(dispatch_get_main_queue()) {
-                        let alert = UIAlertController(title: nil, message: "Error, invalid password", preferredStyle: .Alert)
-                        alert.addAction(UIAlertAction(title: "ok", style: .Default, handler: nil))
-                        self.presentViewController(alert, animated: true, completion: nil)
-                    }
-                } else {
+            RESTEngine.sharedEngine.loginWithEmail(emailTextField.text!, password: passwordTextField.text!,
+                success: { response in
+                    RESTEngine.sharedEngine.sessionToken = response!["session_token"] as? String
                     let defaults = NSUserDefaults.standardUserDefaults()
-                    defaults.setValue(baseUrl, forKey: kBaseInstanceUrl)
-                    defaults.setValue(response!["session_token"] as! String, forKey: kSessionTokenKey)
                     defaults.setValue(self.emailTextField.text!, forKey: kUserEmail)
                     defaults.setValue(self.passwordTextField.text!, forKey: kPassword)
                     defaults.synchronize()
-                    
                     dispatch_async(dispatch_get_main_queue()) {
                         self.showAddressBookViewController()
                     }
-                }
-            })
+                }, failure: { error in
+                    NSLog("Error logging in user: \(error)")
+                    dispatch_async(dispatch_get_main_queue()) {
+                        let alert = UIAlertController(title: nil, message: "Error, invalid password", preferredStyle: .Alert)
+                        alert.addAction(UIAlertAction(title: "OK", style: .Default, handler: nil))
+                        self.presentViewController(alert, animated: true, completion: nil)
+                    }
+                })
         } else {
-            let alert = UIAlertController(title: nil, message: "Error, invalid password", preferredStyle: .Alert)
+            let alert = UIAlertController(title: nil, message: "Enter email and password", preferredStyle: .Alert)
             alert.addAction(UIAlertAction(title: "OK", style: .Default, handler: nil))
             presentViewController(alert, animated: true, completion: nil)
         }

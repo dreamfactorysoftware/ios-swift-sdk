@@ -42,7 +42,7 @@
                                     </userDefinedRuntimeAttribute>
                                 </userDefinedRuntimeAttributes>
                                 <connections>
-                                    <action selector="SubmitActionEvent:" destination="BYZ-38-t0r" eventType="touchUpInside" id="hkJ-1W-i2j"/>
+                                    <action selector="onSignInClick:" destination="BYZ-38-t0r" eventType="touchUpInside" id="kiW-ig-k2b"/>
                                 </connections>
                             </button>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" id="8LC-7p-Nh2">
@@ -61,7 +61,7 @@
                                     </userDefinedRuntimeAttribute>
                                 </userDefinedRuntimeAttributes>
                                 <connections>
-                                    <action selector="RegisterActionEvent:" destination="BYZ-38-t0r" eventType="touchUpInside" id="ide-6n-bmr"/>
+                                    <action selector="onRegisterClick:" destination="BYZ-38-t0r" eventType="touchUpInside" id="mE7-lt-Lp4"/>
                                 </connections>
                             </button>
                             <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" placeholder="Enter email" textAlignment="center" minimumFontSize="80" id="Rnm-ip-Clx">
@@ -159,7 +159,7 @@
                                     </userDefinedRuntimeAttribute>
                                 </userDefinedRuntimeAttributes>
                                 <connections>
-                                    <action selector="SubmitActionEvent:" destination="Gj3-Mz-pYT" eventType="touchUpInside" id="Yd7-kO-OTb"/>
+                                    <action selector="onSubmitClick:" destination="Gj3-Mz-pYT" eventType="touchUpInside" id="03o-IB-oOx"/>
                                 </connections>
                             </button>
                         </subviews>

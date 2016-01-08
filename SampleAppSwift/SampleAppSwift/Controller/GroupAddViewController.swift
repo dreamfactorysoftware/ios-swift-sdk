@@ -68,18 +68,18 @@ class GroupAddViewController: UIViewController, UITableViewDataSource, UITableVi
         
         let navBar = self.navBar
         navBar.showDone()
-        navBar.doneButton.addTarget(self, action: "saveButtonHit", forControlEvents: .TouchDown)
+        navBar.doneButton.addTarget(self, action: "onDoneButtonClick", forControlEvents: .TouchDown)
         navBar.enableAllTouch()
     }
     
     override func viewWillDisappear(animated: Bool) {
         super.viewWillDisappear(animated)
         
-        self.navBar.doneButton.removeTarget(self, action: "saveButtonHit", forControlEvents: .TouchDown)
+        self.navBar.doneButton.removeTarget(self, action: "onDoneButtonClick", forControlEvents: .TouchDown)
         navBar.disableAllTouch()
     }
     
-    func saveButtonHit() {
+    func onDoneButtonClick() {
         if groupNameTextField.text?.characters.count == 0 {
             let alert = UIAlertController(title: nil, message: "Please enter a group name", preferredStyle: .Alert)
             alert.addAction(UIAlertAction(title: "ok", style: .Default, handler: nil))
