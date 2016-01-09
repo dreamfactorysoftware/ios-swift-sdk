@@ -29,10 +29,6 @@ class ProfileImagePickerViewController: UIViewController, UITableViewDataSource,
     
     weak var delegate: ProfileImagePickerDelegate?
     
-    private lazy var baseUrl: String = {
-        return NSUserDefaults.standardUserDefaults().valueForKey(kBaseInstanceUrl) as! String
-    }()
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         getImageListFromServer()
@@ -110,58 +106,34 @@ class ProfileImagePickerViewController: UIViewController, UITableViewDataSource,
     //MARK: - Private methods
     
     private func getImageListFromServer() {
-        let swgSessionToken = NSUserDefaults.standardUserDefaults().valueForKey(kSessionTokenKey) as? String
-        if swgSessionToken?.characters.count > 0 {
+        
+        RESTEngine.sharedEngine.getImageListFromServerWithContactId(record.id, success: { response in
+            self.imageListContentArray.removeAll()
+            let records = response!["file"] as! JSONArray
+            for record in records {
+                if let record = record["name"] as? String {
+                    self.imageListContentArray.append(record)
+                }
+            }
+            dispatch_async(dispatch_get_main_queue()) {
+                self.tableView.reloadData()
+            }
             
-            let api = NIKApiInvoker.sharedInstance
-            
-            // build rest path for request, form is <base instance url>/api/v2/files/container/<folder path>/
-            // here the folder path is contactId/
-            let containerName = kContainerName
-            let folderPath = "/\(record.id)"
-            
-            // note that you need the extra '/' here at the end of the api path because
-            // the url is pointing to a folder
-            let restApiPath = "\(baseUrl)/files/\(containerName)/\(folderPath)/"
-            NSLog("\nAPI path: \(restApiPath)\n")
-            
-            // only want to get files, not any sub folders
-            let queryParams: [String: AnyObject] = ["include_folders": "0",
-                                                    "include_files": "1"]
-            
-            let headerParams = ["X-DreamFactory-Api-Key": kApiKey,
-                "X-DreamFactory-Session-Token": swgSessionToken!]
-            let contentType = "application/json"
-            
-            api.restPath(restApiPath, method: "GET", queryParams: queryParams, body: nil, headerParams: headerParams, contentType: contentType, completionBlock: { (response, error) -> Void in
-                if let error = error {
-                    // check if the error is file not found
-                    if error.code == 404 {
-                        let decode = error.userInfo["error"]?.firstItem as? JSON
-                        let message = decode?["message"] as? String
-                        if message != nil && message!.containsString("does not exist in storage") {
-                            NSLog("Warning: Error getting profile image list data from server: \(message)")
-                            return
-                        }
-                    }
-                    // else report normally
-                    NSLog("Error getting profile image list data from server: \(error)")
-                    dispatch_async(dispatch_get_main_queue()) {
-                        self.navigationController?.popToRootViewControllerAnimated(true)
-                    }
-                } else {
-                    self.imageListContentArray.removeAll()
-                    let records = response!["file"] as! JSONArray
-                    for record in records {
-                        if let record = record["name"] as? String {
-                            self.imageListContentArray.append(record)
-                        }
-                    }
-                    dispatch_async(dispatch_get_main_queue()) {
-                        self.tableView.reloadData()
+            }, failure: { error in
+                // check if the error is file not found
+                if error.code == 404 {
+                    let decode = error.userInfo["error"]?.firstItem as? JSON
+                    let message = decode?["message"] as? String
+                    if message != nil && message!.containsString("does not exist in storage") {
+                        NSLog("Warning: Error getting profile image list data from server: \(message)")
+                        return
                     }
                 }
-            })
-        }
+                // else report normally
+                NSLog("Error getting profile image list data from server: \(error)")
+                dispatch_async(dispatch_get_main_queue()) {
+                    self.navigationController?.popToRootViewControllerAnimated(true)
+                }
+        })
     }
 }

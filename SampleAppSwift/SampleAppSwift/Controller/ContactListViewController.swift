@@ -34,10 +34,6 @@ class ContactListViewController: UITableViewController, UISearchBarDelegate {
     private var viewReady = false
     private var queue: dispatch_queue_t!
     
-    private lazy var baseUrl: String = {
-        return NSUserDefaults.standardUserDefaults().valueForKey(kBaseInstanceUrl) as! String
-    }()
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -51,8 +47,10 @@ class ContactListViewController: UITableViewController, UISearchBarDelegate {
     
     override func viewWillAppear(animated: Bool) {
         if !didPrefetch {
-            dispatch_async(queue) {[unowned self] in
-                self.getContactsListFromServerWithRelation()
+            dispatch_async(queue) {[weak self] in
+                if let strongSelf = self {
+                    strongSelf.getContactsListFromServerWithRelation()
+                }
             }
         }
         
@@ -105,8 +103,10 @@ class ContactListViewController: UITableViewController, UISearchBarDelegate {
             queue = dispatch_queue_create("contactListQueue", nil)
         }
         
-        dispatch_async(queue) {[unowned self] in
-            self.getContactsListFromServerWithRelation()
+        dispatch_async(queue) {[weak self] in
+            if let strongSelf = self {
+                strongSelf.getContactsListFromServerWithRelation()
+            }
         }
     }
     
@@ -237,7 +237,7 @@ class ContactListViewController: UITableViewController, UISearchBarDelegate {
                 
                 // need to delete everything with references to contact before
                 // removing contact its self
-                removeContactGroupRelationWithContactId(record.id)
+                removeContactWithContactId(record.id)
                 
                 displayContentArray.removeAtIndex(indexPath.row)
                 tableView.deleteRowsAtIndexPaths([indexPath], withRowAnimation: .Automatic)
@@ -254,11 +254,7 @@ class ContactListViewController: UITableViewController, UISearchBarDelegate {
                     alphabetArray.removeAtIndex(indexPath.section)
                 }
                 
-                // need to delete everything with references to contact before we can
-                // delete the contact
-                // delete contact relation -> delete contact info -> delete profile images ->
-                // delete contact
-                removeContactGroupRelationWithContactId(record.id)
+                removeContactWithContactId(record.id)
             }
         }
     }
@@ -277,277 +273,127 @@ class ContactListViewController: UITableViewController, UISearchBarDelegate {
     }
     
     private func getContactsListFromServerWithRelation() {
-        // get all the contacts in the group using relational queries
         
-        let swgSessionToken = NSUserDefaults.standardUserDefaults().valueForKey(kSessionTokenKey) as? String
-        if swgSessionToken?.characters.count > 0 {
+        RESTEngine.sharedEngine.getContactsListFromServerWithRelationWithGroupId(groupRecord.id, success: { response in
             
-            let api = NIKApiInvoker.sharedInstance
-            // build rest path for request, form is <base instance url>/api/v2/<serviceName>/_table/<tableName>
-            let serviceName = kDbServiceName
-            let tableName = "contact_group_relationship" // table name
+            self.alphabetArray = []
+            self.contactSectionsDictionary = [:]
+            self.displayContentArray.removeAll()
             
-            let restApiPath = "\(baseUrl)/\(serviceName)/\(tableName)"
-            NSLog("\n\(restApiPath)\n")
+            // handle repeat contact-group relationships
+            var tmpContactIdList: [NSNumber] = []
             
-            // only get contact_group_relationships for this group
-            var queryParams: [String: AnyObject] = ["filter": "contact_group_id=\(groupRecord.id)"]
-            
-            // request without related would return just {id, groupId, contactId}
-            // set the related field to go get the contact records referenced by
-            // each contact_group_relationship record
-            queryParams["related"] = "contact_by_contact_id";
-            
-            let headerParams = ["X-DreamFactory-Api-Key": kApiKey,
-                "X-DreamFactory-Session-Token": swgSessionToken!]
-            let contentType = "application/json"
-            
-            api.restPath(restApiPath, method: "GET", queryParams: queryParams, body: nil, headerParams: headerParams, contentType: contentType, completionBlock: { (response, error) -> Void in
-                if let error = error {
-                    if error.code == 400 {
-                        let decode = error.userInfo["error"]?.firstItem as? JSON
-                        let message = decode?["message"] as? String
-                        if message != nil && message!.containsString("Invalid relationship") {
-                            NSLog("Error: table names in relational calls are case sensitive: \(message)")
-                            dispatch_async(dispatch_get_main_queue()) {
-                                self.navigationController?.popToRootViewControllerAnimated(true)
-                            }
-                            return
-                        }
-                    }
-                    NSLog("Error getting contacts with relation: \(error)")
-                    dispatch_async(dispatch_get_main_queue()) {
-                        self.navigationController?.popToRootViewControllerAnimated(true)
-                    }
-                } else {
-                    self.alphabetArray = []
-                    self.contactSectionsDictionary = [:]
-                    self.displayContentArray.removeAll()
-                    
-                    // handle repeat contact-group relationships
-                    var tmpContactIdList: [NSNumber] = []
-                    
-                    /*
-                    *  Structure of reply is:
-                    *  {
-                    *      record:[
-                    *          {
-                    *              <relation info>,
-                    *              contact_by_contact_id:{
-                    *                  <contact info>
-                    *              }
-                    *          },
-                    *          ...
-                    *      ]
-                    *  }
-                    */
-                    let records = response!["resource"] as! JSONArray
-                    for relationRecord in records {
-                        let recordInfo = relationRecord["contact_by_contact_id"] as! JSON
-                        let contactId = recordInfo["id"] as! NSNumber
-                        if tmpContactIdList.contains(contactId) {
-                            // a different record already related the group-contact pair
-                            continue
-                        }
-                        tmpContactIdList.append(contactId)
-                        
-                        let newRecord = ContactRecord(json: recordInfo)
-                        if !newRecord.lastName.isEmpty {
-                            var found = false
-                            for key in self.contactSectionsDictionary.keys {
-                                // want to group by last name regardless of case
-                                if key.caseInsensitiveCompare(newRecord.lastName.substringToIndex(newRecord.lastName.startIndex.advancedBy(1))) == .OrderedSame {
-                                    
-                                    // contact fits in one of the buckets already in the dictionary
-                                    var section = self.contactSectionsDictionary[key]!
-                                    section.append(newRecord)
-                                    self.contactSectionsDictionary[key] = section
-                                    found = true
-                                    break
-                                }
-                            }
-                            
-                            if !found {
-                                // contact doesn't fit in any of the other buckets, make a new one
-                                let key = newRecord.lastName.substringToIndex(newRecord.lastName.startIndex.advancedBy(1))
-                                self.contactSectionsDictionary[key] = [newRecord]
-                            }
-                        }
-                    }
-                    
-                    var tmp: [String: [ContactRecord]] = [:]
-                    // sort the sections alphabetically by last name, first name
+            /*
+            *  Structure of reply is:
+            *  {
+            *      record:[
+            *          {
+            *              <relation info>,
+            *              contact_by_contact_id:{
+            *                  <contact info>
+            *              }
+            *          },
+            *          ...
+            *      ]
+            *  }
+            */
+            let records = response!["resource"] as! JSONArray
+            for relationRecord in records {
+                let recordInfo = relationRecord["contact_by_contact_id"] as! JSON
+                let contactId = recordInfo["id"] as! NSNumber
+                if tmpContactIdList.contains(contactId) {
+                    // a different record already related the group-contact pair
+                    continue
+                }
+                tmpContactIdList.append(contactId)
+                
+                let newRecord = ContactRecord(json: recordInfo)
+                if !newRecord.lastName.isEmpty {
+                    var found = false
                     for key in self.contactSectionsDictionary.keys {
-                        let unsorted = self.contactSectionsDictionary[key]!
-                        let sorted = unsorted.sort({ (one, two) -> Bool in
-                            if one.lastName.caseInsensitiveCompare(two.lastName) == .OrderedSame {
-                                return one.firstName.compare(two.firstName) == NSComparisonResult.OrderedAscending
-                            }
-                            return one.lastName.compare(two.lastName) == NSComparisonResult.OrderedAscending
-                        })
-                        tmp[key] = sorted
-                    }
-                    self.contactSectionsDictionary = tmp
-                    self.alphabetArray = Array(self.contactSectionsDictionary.keys).sort()
-                    
-                    dispatch_async(dispatch_get_main_queue()) {
-                        if !self.viewReady {
-                            self.viewReady = true
-                            self.viewLock.signal()
-                            self.viewLock.unlock()
-                        } else {
-                            self.tableView.reloadData()
+                        // want to group by last name regardless of case
+                        if key.caseInsensitiveCompare(newRecord.lastName.substringToIndex(newRecord.lastName.startIndex.advancedBy(1))) == .OrderedSame {
+                            
+                            // contact fits in one of the buckets already in the dictionary
+                            var section = self.contactSectionsDictionary[key]!
+                            section.append(newRecord)
+                            self.contactSectionsDictionary[key] = section
+                            found = true
+                            break
                         }
                     }
-                }
-            })
-        }
-        
-    }
-    
-    private func removeContactGroupRelationWithContactId(contactId: NSNumber) {
-        
-        let swgSessionToken = NSUserDefaults.standardUserDefaults().valueForKey(kSessionTokenKey) as? String
-        if swgSessionToken?.characters.count > 0 {
-            
-            let api = NIKApiInvoker.sharedInstance
-            // build rest path for request, form is <base instance url>/api/v2/<serviceName>/_table/<tableName>
-            let serviceName = kDbServiceName
-            let tableName = "contact_group_relationship"
-            
-            let restApiPath = "\(baseUrl)/\(serviceName)/\(tableName)"
-            NSLog("\n\(restApiPath)\n")
-            
-            // remove only contact-group relationships where contact is the contact to remove
-            let queryParams: JSON = ["filter": "contact_id=\(contactId)"]
-            
-            let headerParams = ["X-DreamFactory-Api-Key": kApiKey,
-                "X-DreamFactory-Session-Token": swgSessionToken!]
-            let contentType = "application/json"
-            
-            api.restPath(restApiPath, method: "DELETE", queryParams: queryParams, body: nil, headerParams: headerParams, contentType: contentType, completionBlock: { (response, error) -> Void in
-                if let error = error {
-                    NSLog("Error removing contact group relation: \(error)")
-                    dispatch_async(dispatch_get_main_queue()) {
-                        self.navigationController?.popToRootViewControllerAnimated(true)
+                    
+                    if !found {
+                        // contact doesn't fit in any of the other buckets, make a new one
+                        let key = newRecord.lastName.substringToIndex(newRecord.lastName.startIndex.advancedBy(1))
+                        self.contactSectionsDictionary[key] = [newRecord]
                     }
-                } else {
-                    self.removeContactInfoWithContactId(contactId)
                 }
-            })
-        }
-    }
-    
-    private func removeContactInfoWithContactId(contactId: NSNumber) {
-        let swgSessionToken = NSUserDefaults.standardUserDefaults().valueForKey(kSessionTokenKey) as? String
-        if swgSessionToken?.characters.count > 0 {
+            }
             
-            let api = NIKApiInvoker.sharedInstance
-            // build rest path for request, form is <base instance url>/api/v2/<serviceName>/_table/<tableName>
-            let serviceName = kDbServiceName
-            let tableName = "contact_info"
-            
-            let restApiPath = "\(baseUrl)/\(serviceName)/\(tableName)"
-            NSLog("\n\(restApiPath)\n")
-            
-            // remove only contactinfo for the contact we want to remove
-            let queryParams: JSON = ["filter": "contact_id=\(contactId)"]
-            
-            let headerParams = ["X-DreamFactory-Api-Key": kApiKey,
-                "X-DreamFactory-Session-Token": swgSessionToken!]
-            let contentType = "application/json"
-            
-            api.restPath(restApiPath, method: "DELETE", queryParams: queryParams, body: nil, headerParams: headerParams, contentType: contentType, completionBlock: { (response, error) -> Void in
-                if let error = error {
-                    NSLog("Error deleting contact info: \(error)")
-                    dispatch_async(dispatch_get_main_queue()) {
-                        self.navigationController?.popToRootViewControllerAnimated(true)
+            var tmp: [String: [ContactRecord]] = [:]
+            // sort the sections alphabetically by last name, first name
+            for key in self.contactSectionsDictionary.keys {
+                let unsorted = self.contactSectionsDictionary[key]!
+                let sorted = unsorted.sort({ (one, two) -> Bool in
+                    if one.lastName.caseInsensitiveCompare(two.lastName) == .OrderedSame {
+                        return one.firstName.compare(two.firstName) == NSComparisonResult.OrderedAscending
                     }
+                    return one.lastName.compare(two.lastName) == NSComparisonResult.OrderedAscending
+                })
+                tmp[key] = sorted
+            }
+            self.contactSectionsDictionary = tmp
+            self.alphabetArray = Array(self.contactSectionsDictionary.keys).sort()
+            
+            dispatch_async(dispatch_get_main_queue()) {
+                if !self.viewReady {
+                    self.viewReady = true
+                    self.viewLock.signal()
+                    self.viewLock.unlock()
                 } else {
-                    self.removeImageFileFolderFromServerWithContactId(contactId)
+                    self.tableView.reloadData()
                 }
-            })
-        }
-    }
-    
-    private func removeImageFileFolderFromServerWithContactId(contactId: NSNumber) {
-        // try to remove image folder if one was created
-        let swgSessionToken = NSUserDefaults.standardUserDefaults().valueForKey(kSessionTokenKey) as? String
-        if swgSessionToken?.characters.count > 0 {
+            }
             
-            let api = NIKApiInvoker.sharedInstance
-            
-            // build rest path for request, form is <base instance url>/api/v2/files/container/<folder path>/
-            // here the folder path is contactId/
-            let containerName = kContainerName
-            let folderPath = "/\(contactId)"
-            
-            // note that you need the extra '/' here at the end of the api path because
-            // the url is pointing to a folder
-            let restApiPath = "\(baseUrl)/files/\(containerName)/\(folderPath)/"
-            NSLog("\nAPI path: \(restApiPath)\n")
-            
-            // delete all files and folders in the target folder
-            let queryParams: JSON = ["force": NSNumber(bool: true).stringValue]
-            
-            let headerParams = ["X-DreamFactory-Api-Key": kApiKey,
-                "X-DreamFactory-Session-Token": swgSessionToken!]
-            let contentType = "application/json"
-            
-            api.restPath(restApiPath, method: "DELETE", queryParams: queryParams, body: nil, headerParams: headerParams, contentType: contentType, completionBlock: { (response, error) -> Void in
-                if let error = error {
-                    NSLog("Error deleting profile image folder on server: \(error)")
-                    dispatch_async(dispatch_get_main_queue()) {
-                        // could not remove folder
-                        self.navigationController?.popToRootViewControllerAnimated(true)
+            }, failure: { error in
+                if error.code == 400 {
+                    let decode = error.userInfo["error"]?.firstItem as? JSON
+                    let message = decode?["message"] as? String
+                    if message != nil && message!.containsString("Invalid relationship") {
+                        NSLog("Error: table names in relational calls are case sensitive: \(message)")
+                        dispatch_async(dispatch_get_main_queue()) {
+                            self.navigationController?.popToRootViewControllerAnimated(true)
+                        }
+                        return
                     }
-                } else {
-                    self.removeContactWithContactId(contactId)
                 }
-            })
-        }
+                NSLog("Error getting contacts with relation: \(error)")
+                dispatch_async(dispatch_get_main_queue()) {
+                    self.navigationController?.popToRootViewControllerAnimated(true)
+                }
+        })
     }
     
     private func removeContactWithContactId(contactId: NSNumber) {
         // finally remove the contact from the database
         
-        let swgSessionToken = NSUserDefaults.standardUserDefaults().valueForKey(kSessionTokenKey) as? String
-        if swgSessionToken?.characters.count > 0 {
-            
-            let api = NIKApiInvoker.sharedInstance
-            // build rest path for request, form is <base instance url>/api/v2/<serviceName>/_table/<tableName>
-            let serviceName = kDbServiceName
-            let tableName = "contact"
-            
-            let restApiPath = "\(baseUrl)/\(serviceName)/\(tableName)"
-            NSLog("\n\(restApiPath)\n")
-            
-            // remove contact by record ID
-            let queryParams: JSON = ["ids": "\(contactId)"]
-            
-            let headerParams = ["X-DreamFactory-Api-Key": kApiKey,
-                "X-DreamFactory-Session-Token": swgSessionToken!]
-            let contentType = "application/json"
-            
-            api.restPath(restApiPath, method: "DELETE", queryParams: queryParams, body: nil, headerParams: headerParams, contentType: contentType, completionBlock: { (response, error) -> Void in
-                if let error = error {
-                    NSLog("Error deleting contact: \(error)")
-                    dispatch_async(dispatch_get_main_queue()) {
-                        self.navigationController?.popToRootViewControllerAnimated(true)
-                    }
-                } else {
-                    dispatch_async(dispatch_get_main_queue()) {
-                        self.tableView.reloadData()
-                    }
+        RESTEngine.sharedEngine.removeContactWithContactId(contactId, success: { _ in
+            dispatch_async(dispatch_get_main_queue()) {
+                self.tableView.reloadData()
+            }
+            }, failure: { error in
+                NSLog("Error deleting contact: \(error)")
+                dispatch_async(dispatch_get_main_queue()) {
+                    self.navigationController?.popToRootViewControllerAnimated(true)
                 }
-            })
-        }
+        })
     }
     
     private func showContactViewControllerForRecord(record: ContactRecord) {
         goingToShowContactViewController = true
         // give the calls on the other end just a little bit of time
-        dispatch_async(dispatch_queue_create("contactListShowQueue", nil)) {
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)) {
             self.contactViewController!.waitToReady()
             dispatch_async(dispatch_get_main_queue()) {
                 self.navigationController?.pushViewController(self.contactViewController!, animated: true)
@@ -568,7 +414,7 @@ class ContactListViewController: UITableViewController, UISearchBarDelegate {
         groupAddViewController.groupRecord = groupRecord
         groupAddViewController.prefetch()
         
-        dispatch_async(dispatch_queue_create("contactListShowQueue", nil)) {
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)) {
             
             groupAddViewController.waitToReady()
             dispatch_async(dispatch_get_main_queue()) {

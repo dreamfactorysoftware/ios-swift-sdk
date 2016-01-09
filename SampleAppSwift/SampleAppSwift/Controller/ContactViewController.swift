@@ -32,10 +32,6 @@ class ContactViewController: UIViewController {
     
     private var canceled = false
     
-    private lazy var baseUrl: String = {
-        return NSUserDefaults.standardUserDefaults().valueForKey(kBaseInstanceUrl) as! String
-    }()
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -94,14 +90,20 @@ class ContactViewController: UIViewController {
         }
         
         queue = dispatch_queue_create("contactViewQueue", nil)
-        dispatch_async(queue) {[unowned self] in
-            self.getContactInfoFromServerForRecord(self.contactRecord)
+        dispatch_async(queue) {[weak self] in
+            if let strongSelf = self {
+                strongSelf.getContactInfoFromServerForRecord(strongSelf.contactRecord)
+            }
         }
-        dispatch_async(queue) {[unowned self] in
-            self.getContactsListFromServerWithRelation()
+        dispatch_async(queue) {[weak self] in
+            if let strongSelf = self {
+                strongSelf.getContactsListFromServerWithRelation()
+            }
         }
-        dispatch_async(queue) {[unowned self] in
-            self.buildContactView()
+        dispatch_async(queue) {[weak self] in
+            if let strongSelf = self {
+                strongSelf.buildContactView()
+            }
         }
     }
     
@@ -241,7 +243,7 @@ class ContactViewController: UIViewController {
         }
         
         // clear out the view
-        dispatch_async(dispatch_get_main_queue()) {
+        dispatch_sync(dispatch_get_main_queue()) {
             for view in self.contactDetailScrollView.subviews {
                 view.removeFromSuperview()
             }
@@ -322,6 +324,10 @@ class ContactViewController: UIViewController {
             }
         }
         
+        dispatch_sync(dispatch_get_main_queue()) {
+            self.contactDetailScrollView.reloadInputViews()
+        }
+        
         // wait until the group is ready to build group list subviews
         groupLock.lock()
         while !groupReady {
@@ -351,60 +357,38 @@ class ContactViewController: UIViewController {
     }
     
     private func getContactInfoFromServerForRecord(record: ContactRecord) {
-        // get all the contacts in the group using relational queries
-        
-        let swgSessionToken = NSUserDefaults.standardUserDefaults().valueForKey(kSessionTokenKey) as? String
-        if swgSessionToken?.characters.count > 0 {
+        RESTEngine.sharedEngine.getContactInfoFromServerWithContactId(record.id, success: { response in
+            // put the contact ids into an array
+            var array: [ContactDetailRecord] = []
             
-            let api = NIKApiInvoker.sharedInstance
-            // build rest path for request, form is <base instance url>/api/v2/<serviceName>/_table/<tableName>
-            let serviceName = kDbServiceName
-            let tableName = "contact_info" // table name
+            // double check we don't fetch any repeats
+            var existingIds: [NSNumber: Bool] = [:]
             
-            let restApiPath = "\(baseUrl)/\(serviceName)/\(tableName)"
-            NSLog("\n\(restApiPath)\n")
-            
-            // get the contact records
-            let queryParams: [String: AnyObject] = ["filter": "contact_id=\(record.id)"]
-
-            let headerParams = ["X-DreamFactory-Api-Key": kApiKey,
-                "X-DreamFactory-Session-Token": swgSessionToken!]
-            let contentType = "application/json"
-            
-            api.restPath(restApiPath, method: "GET", queryParams: queryParams, body: nil, headerParams: headerParams, contentType: contentType, completionBlock: { (response, error) -> Void in
-                if let error = error {
-                    NSLog("Error getting contact info: \(error)")
-                    dispatch_async(dispatch_get_main_queue()) {
-                        self.navigationController?.popToRootViewControllerAnimated(true)
-                    }
-                } else {
-                    // put the contact ids into an array
-                    var array: [ContactDetailRecord] = []
-                    
-                    // double check we don't fetch any repeats
-                    var existingIds: [NSNumber: Bool] = [:]
-                    
-                    let records = response!["resource"] as! JSONArray
-                    for recordInfo in records {
-                        let recordId = recordInfo["id"] as! NSNumber
-                        if existingIds[recordId] != nil {
-                            continue
-                        }
-                        existingIds[recordId] = true
-                        
-                        let newRecord = ContactDetailRecord(json: recordInfo)
-                        array.append(newRecord)
-                    }
-                    
-                    self.contactDetails = array
-                    dispatch_async(dispatch_get_main_queue()) {
-                        self.waitReady = true
-                        self.waitLock.signal()
-                        self.waitLock.unlock()
-                    }
+            let records = response!["resource"] as! JSONArray
+            for recordInfo in records {
+                let recordId = recordInfo["id"] as! NSNumber
+                if existingIds[recordId] != nil {
+                    continue
                 }
-            })
-        }
+                existingIds[recordId] = true
+                
+                let newRecord = ContactDetailRecord(json: recordInfo)
+                array.append(newRecord)
+            }
+            
+            self.contactDetails = array
+            dispatch_async(dispatch_get_main_queue()) {
+                self.waitReady = true
+                self.waitLock.signal()
+                self.waitLock.unlock()
+            }
+            
+            }, failure: { error in
+                NSLog("Error getting contact info: \(error)")
+                dispatch_async(dispatch_get_main_queue()) {
+                    self.navigationController?.popToRootViewControllerAnimated(true)
+                }
+        })
     }
     
     private func getProfileImageFromServerToImageView(imageView: UIImageView) {
@@ -417,38 +401,10 @@ class ContactViewController: UIViewController {
             return
         }
         
-        let swgSessionToken = NSUserDefaults.standardUserDefaults().valueForKey(kSessionTokenKey) as? String
-        if swgSessionToken?.characters.count > 0 {
-            
-            let api = NIKApiInvoker.sharedInstance
-            
-            // build rest path for request, form is <base instance url>/api/v2/files/container/<folder path>/filename
-            // here the folder path is contactId/
-            // the file path does not end in a '/' because we are targeting a file not a folder
-            let containerName = kContainerName
-            let folderPath = "/\(contactRecord.id)"
-            let fileName = contactRecord.imageURL
-            
-            let restApiPath = "\(baseUrl)/files/\(containerName)/\(folderPath)/\(fileName)"
-            NSLog("\nAPI path: \(restApiPath)\n")
-            
-            // request a download from the file
-            let queryParams: [String: AnyObject] = ["include_properties": "1",
-                                                    "content": "1",
-                                                    "download": "1"]
-            
-            let headerParams = ["X-DreamFactory-Api-Key": kApiKey,
-                "X-DreamFactory-Session-Token": swgSessionToken!]
-            let contentType = "application/json"
-            
-            api.restPath(restApiPath, method: "GET", queryParams: queryParams, body: nil, headerParams: headerParams, contentType: contentType, completionBlock: { (response, error) -> Void in
-                if let error = error {
-                    NSLog("Error getting profile image data from server: \(error)")
-                }
-                
-                dispatch_async(dispatch_get_main_queue()) {
-                    var image: UIImage!
-                    guard error == nil, let content = response?["content"] as? String,
+        RESTEngine.sharedEngine.getProfileImageFromServerWithContactId(contactRecord.id, fileName: contactRecord.imageURL, success: { response in
+            dispatch_async(dispatch_get_main_queue()) {
+                var image: UIImage!
+                guard let content = response?["content"] as? String,
                     let fileData = NSData(base64EncodedString: content, options: [NSDataBase64DecodingOptions.IgnoreUnknownCharacters])
                     else {
                         NSLog("\nWARN: Could not load image off of server, loading default\n");
@@ -457,89 +413,72 @@ class ContactViewController: UIViewController {
                         imageView.contentMode = .ScaleAspectFit
                         self.contactDetailScrollView.addSubview(imageView)
                         return
-                    }
-                    
-                    image = UIImage(data: fileData)
+                }
+                
+                image = UIImage(data: fileData)
+                imageView.image = image
+                imageView.contentMode = .ScaleAspectFit
+                self.contactDetailScrollView.addSubview(imageView)
+            }
+
+            }, failure: { error in
+                NSLog("Error getting profile image data from server: \(error)")
+                dispatch_async(dispatch_get_main_queue()) {
+                    NSLog("\nWARN: Could not load image off of server, loading default\n");
+                    let image = UIImage(named: "default_portrait")
                     imageView.image = image
                     imageView.contentMode = .ScaleAspectFit
                     self.contactDetailScrollView.addSubview(imageView)
                 }
             })
-        }
     }
     
     private func getContactsListFromServerWithRelation() {
-        // get all the group the contact is in using relational queries
         
-        let swgSessionToken = NSUserDefaults.standardUserDefaults().valueForKey(kSessionTokenKey) as? String
-        if swgSessionToken?.characters.count > 0 {
+        RESTEngine.sharedEngine.getContactGroupsWithContactId(contactRecord.id, success: { response in
+            self.contactGroups.removeAll()
             
-            let api = NIKApiInvoker.sharedInstance
-            // build rest path for request, form is <base instance url>/api/v2/<serviceName>/_table/<tableName>
-            let serviceName = kDbServiceName
-            let tableName = "contact_group_relationship" // table name
+            // handle repeat contact-group relationships
+            var tmpGroupIdMap: [NSNumber: Bool] = [:]
             
-            let restApiPath = "\(baseUrl)/\(serviceName)/\(tableName)"
-            NSLog("\n\(restApiPath)\n")
+            /*
+            *  Structure of reply is:
+            *  {
+            *      record:[
+            *          {
+            *              <relation info>,
+            *              contact_group_by_contactGroupId:{
+            *                  <group info>
+            *              }
+            *          },
+            *          ...
+            *      ]
+            *  }
+            */
             
-            // only get contact_group_relationships for this contact
-            var queryParams: [String: AnyObject] = ["filter": "contact_id=\(contactRecord.id)"]
-            
-            // request without related would return just {id, groupId, contactId}
-            // set the related field to go get the group records referenced by
-            // each contact_group_relationship record
-            queryParams["related"] = "contact_group_by_contact_group_id"
-            
-            let headerParams = ["X-DreamFactory-Api-Key": kApiKey,
-                "X-DreamFactory-Session-Token": swgSessionToken!]
-            let contentType = "application/json"
-            
-            api.restPath(restApiPath, method: "GET", queryParams: queryParams, body: nil, headerParams: headerParams, contentType: contentType, completionBlock: { (response, error) -> Void in
-                if let error = error {
-                    NSLog("Error getting groups with relation: \(error)")
-                    dispatch_async(dispatch_get_main_queue()) {
-                        self.navigationController?.popToRootViewControllerAnimated(true)
-                    }
-                } else {
-                    self.contactGroups.removeAll()
-                    
-                    // handle repeat contact-group relationships
-                    var tmpGroupIdMap: [NSNumber: Bool] = [:]
-                    
-                    /*
-                    *  Structure of reply is:
-                    *  {
-                    *      record:[
-                    *          {
-                    *              <relation info>,
-                    *              contact_group_by_contactGroupId:{
-                    *                  <group info>
-                    *              }
-                    *          },
-                    *          ...
-                    *      ]
-                    *  }
-                    */
-                    
-                    let records = response!["resource"] as! JSONArray
-                    for relationalRecord in records {
-                        let recordInfo = relationalRecord["contact_group_by_contact_group_id"] as! JSON
-                        let contactId = recordInfo["id"] as! NSNumber
-                        if tmpGroupIdMap[contactId] != nil {
-                            // a different record already related the group-contact pair
-                            continue
-                        }
-                        tmpGroupIdMap[contactId] = true
-                        let groupName = recordInfo["name"] as! String
-                        self.contactGroups.append(groupName)
-                    }
-                    dispatch_async(dispatch_get_main_queue()) {
-                        self.groupReady = true
-                        self.groupLock.signal()
-                        self.groupLock.unlock()
-                    }
+            let records = response!["resource"] as! JSONArray
+            for relationalRecord in records {
+                let recordInfo = relationalRecord["contact_group_by_contact_group_id"] as! JSON
+                let contactId = recordInfo["id"] as! NSNumber
+                if tmpGroupIdMap[contactId] != nil {
+                    // a different record already related the group-contact pair
+                    continue
                 }
-            })
-        }
+                tmpGroupIdMap[contactId] = true
+                let groupName = recordInfo["name"] as! String
+                self.contactGroups.append(groupName)
+            }
+            dispatch_async(dispatch_get_main_queue()) {
+                self.groupReady = true
+                self.groupLock.signal()
+                self.groupLock.unlock()
+            }
+
+            }, failure: { error in
+                NSLog("Error getting groups with relation: \(error)")
+                dispatch_async(dispatch_get_main_queue()) {
+                    self.navigationController?.popToRootViewControllerAnimated(true)
+                }
+        })
     }
 }

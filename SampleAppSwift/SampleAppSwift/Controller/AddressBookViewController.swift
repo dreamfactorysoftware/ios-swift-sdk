@@ -15,10 +15,6 @@ class AddressBookViewController: UITableViewController {
     // for prefetching data
     var contactListViewController: ContactListViewController!
     
-    private lazy var baseUrl: String = {
-        return NSUserDefaults.standardUserDefaults().valueForKey(kBaseInstanceUrl) as! String
-    }()
-    
     override func viewDidLoad() {
         super.viewDidLoad()
     }
@@ -126,7 +122,7 @@ class AddressBookViewController: UITableViewController {
     }
     
     private func showContactListViewController() {
-        dispatch_async(dispatch_queue_create("addressBookQueue", nil)) {
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)) {
             // already fetching so just wait until the data gets back
             self.contactListViewController.waitToReady()
             dispatch_async(dispatch_get_main_queue()) {
@@ -139,7 +135,7 @@ class AddressBookViewController: UITableViewController {
         let groupAddViewController = self.storyboard?.instantiateViewControllerWithIdentifier("GroupAddViewController") as! GroupAddViewController
         // tell the viewController we are creating a new group
         groupAddViewController.prefetch()
-        dispatch_async(dispatch_queue_create("contactListShowQueue", nil)) {
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)) {
             // already fetching so just wait until the data gets back
             groupAddViewController.waitToReady()
             dispatch_async(dispatch_get_main_queue()) {

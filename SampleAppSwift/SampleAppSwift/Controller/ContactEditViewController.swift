@@ -8,7 +8,7 @@
 
 import UIKit
 
-class ContactEditViewController: UIViewController, ProfileImagePickerDelegate {
+class ContactEditViewController: UIViewController, ProfileImagePickerDelegate, UITextFieldDelegate {
     @IBOutlet weak var contactEditScrollView: UIScrollView!
     
     weak var contactViewController: ContactViewController?
@@ -36,10 +36,6 @@ class ContactEditViewController: UIViewController, ProfileImagePickerDelegate {
     
     private weak var addButtonRef: UIButton! // reference to bottom AddButton
     private var contactInfoViewHeight: CGFloat = 0 // stores contact view height
-    
-    private lazy var baseUrl: String = {
-        return NSUserDefaults.standardUserDefaults().valueForKey(kBaseInstanceUrl) as! String
-    }()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -80,11 +76,11 @@ class ContactEditViewController: UIViewController, ProfileImagePickerDelegate {
         
         guard let firstName = firstNameOptional where !firstName.isEmpty,
             let lastName = lastNameOptional where !lastName.isEmpty
-        else {
-            let alert = UIAlertController(title: nil, message: "Please enter a first and last name for the contact", preferredStyle: .Alert)
-            alert.addAction(UIAlertAction(title: "OK", style: .Default, handler: nil))
-            presentViewController(alert, animated: true, completion: nil)
-            return
+            else {
+                let alert = UIAlertController(title: nil, message: "Please enter a first and last name for the contact", preferredStyle: .Alert)
+                alert.addAction(UIAlertAction(title: "OK", style: .Default, handler: nil))
+                presentViewController(alert, animated: true, completion: nil)
+                return
         }
         
         self.navBar.disableAllTouch()
@@ -92,7 +88,7 @@ class ContactEditViewController: UIViewController, ProfileImagePickerDelegate {
         if contactRecord != nil {
             //updating existing contact
             if !imageURL.isEmpty && profileImage != nil {
-                putLocalImageOnServer(profileImage!, updatingContact: true)
+                putLocalImageOnServer(profileImage!)
             } else {
                 updateContactWithServer()
             }
@@ -156,6 +152,13 @@ class ContactEditViewController: UIViewController, ProfileImagePickerDelegate {
         // gets info passed back up from the image picker
         self.imageURL = item
         self.profileImage = image
+    }
+    
+    //MARK: - Text field delegate
+    
+    func textFieldShouldReturn(textField: UITextField) -> Bool {
+        textField.resignFirstResponder()
+        return true
     }
     
     // MARK: - Private methods
@@ -227,6 +230,7 @@ class ContactEditViewController: UIViewController, ProfileImagePickerDelegate {
             textField.font = UIFont(name: "Helvetica Neue", size: 20.0)
             textField.backgroundColor = UIColor.whiteColor()
             textField.layer.cornerRadius = 5
+            textField.delegate = self;
             contactEditScrollView.addSubview(textField)
             textFields[field] = textField
             
@@ -235,348 +239,191 @@ class ContactEditViewController: UIViewController, ProfileImagePickerDelegate {
     }
     
     private func addContactToServer() {
-        // need to create contact first, then can add contactInfo and group relationships
-        let swgSessionToken = NSUserDefaults.standardUserDefaults().valueForKey(kSessionTokenKey) as? String
-        if swgSessionToken?.characters.count > 0 {
-            
-            let api = NIKApiInvoker.sharedInstance
-            // build rest path for request, form is <base instance url>/api/v2/<serviceName>/_table/<tableName>
-            let serviceName = kDbServiceName
-            let tableName = "contact" // table name
-            
-            let restApiPath = "\(baseUrl)/\(serviceName)/\(tableName)"
-            NSLog("\n\(restApiPath)\n")
-            
-            let headerParams = ["X-DreamFactory-Api-Key": kApiKey,
-                "X-DreamFactory-Session-Token": swgSessionToken!]
-            let contentType = "application/json"
-            
-            // set up the contact image filename
-            var fileName = ""
-            if !imageURL.isEmpty {
-                fileName = "\(imageURL).jpg"
-            }
-            
-            let requestBody: [String: AnyObject] = ["first_name": textFields["First Name"]!.text!,
-                                                    "last_name": textFields["Last Name"]!.text!,
-                                                    "filename": fileName,
-                                                    "notes": textFields["Notes"]!.text!,
-                                                    "twitter": textFields["Twitter"]!.text!,
-                                                    "skype": textFields["Skype"]!.text!]
-            
-            // build the contact and fill it so we don't have to reload when we go up a level
-            contactRecord = ContactRecord()
-            // add record to the contact list above
-            
-            api.restPath(restApiPath, method: "POST", queryParams: nil, body: requestBody, headerParams: headerParams, contentType: contentType, completionBlock: { (response, error) -> Void in
-                if let error = error {
-                    NSLog("Error adding new contact to server: \(error)")
-                    dispatch_async(dispatch_get_main_queue()) {
-                        self.navigationController?.popToRootViewControllerAnimated(true)
-                    }
-                } else {
-                    let records = response!["resource"] as! JSONArray
-                    for recordInfo in records {
-                        self.contactRecord!.id = (recordInfo["id"] as! NSNumber)
-                    }
-                    
-                    if !self.imageURL.isEmpty && self.profileImage != nil {
-                        self.createProfileImageFolderOnServer()
-                    } else {
-                        self.addContactGroupRelationToServer()
-                    }
-                }
-            })
+        // set up the contact image filename
+        var fileName = ""
+        if !imageURL.isEmpty {
+            fileName = "\(imageURL).jpg"
         }
+        
+        let requestBody: [String: AnyObject] = ["first_name": textFields["First Name"]!.text!,
+            "last_name": textFields["Last Name"]!.text!,
+            "filename": fileName,
+            "notes": textFields["Notes"]!.text!,
+            "twitter": textFields["Twitter"]!.text!,
+            "skype": textFields["Skype"]!.text!]
+        
+        // build the contact and fill it so we don't have to reload when we go up a level
+        contactRecord = ContactRecord()
+        
+        RESTEngine.sharedEngine.addContactToServerWithDetails(requestBody, success: { response in
+            let records = response!["resource"] as! JSONArray
+            for recordInfo in records {
+                self.contactRecord!.id = (recordInfo["id"] as! NSNumber)
+            }
+            if !self.imageURL.isEmpty && self.profileImage != nil {
+                self.createProfileImageOnServer()
+            } else {
+                self.addContactGroupRelationToServer()
+            }
+            }, failure: { error in
+                NSLog("Error adding new contact to server: \(error)")
+                dispatch_async(dispatch_get_main_queue()) {
+                    self.navigationController?.popToRootViewControllerAnimated(true)
+                }
+        })
     }
     
     private func addContactGroupRelationToServer() {
-        // put the contact-group relation up on server
-        let swgSessionToken = NSUserDefaults.standardUserDefaults().valueForKey(kSessionTokenKey) as? String
-        if swgSessionToken?.characters.count > 0 {
+        RESTEngine.sharedEngine.addContactGroupRelationToServerWithContactId(contactRecord!.id, groupId: contactGroupId, success: {  _ in
+            self.addContactInfoToServer()
             
-            let api = NIKApiInvoker.sharedInstance
-            // build rest path for request, form is <base instance url>/api/v2/<serviceName>/_table/<tableName>
-            let serviceName = kDbServiceName
-            let tableName = "contact_group_relationship" // table name
-            
-            let restApiPath = "\(baseUrl)/\(serviceName)/\(tableName)"
-            NSLog("\n\(restApiPath)\n")
-            
-            let headerParams = ["X-DreamFactory-Api-Key": kApiKey,
-                "X-DreamFactory-Session-Token": swgSessionToken!]
-            let contentType = "application/json"
-            
-            // build request body
-            // need to put in any extra field-key pair and avoid NSUrl timeout issue
-            // otherwise it drops connection
-            let requestBody: [String: AnyObject] = ["contact_group_id": contactGroupId,
-                                                    "contact_id": contactRecord!.id]
-            
-            api.restPath(restApiPath, method: "POST", queryParams: nil, body: requestBody, headerParams: headerParams, contentType: contentType, completionBlock: { (response, error) -> Void in
-                if let error = error {
-                    NSLog("Error adding contact group relation to server from contact edit: \(error)")
-                    dispatch_async(dispatch_get_main_queue()) {
-                        self.navigationController?.popToRootViewControllerAnimated(true)
-                    }
-                } else {
-                    self.addContactInfoToServer()
+            }, failure: { error in
+                NSLog("Error adding contact group relation to server from contact edit: \(error)")
+                dispatch_async(dispatch_get_main_queue()) {
+                    self.navigationController?.popToRootViewControllerAnimated(true)
                 }
-            })
-        }
+        })
     }
     
     private func addContactInfoToServer() {
-        // create contact info records
-        let swgSessionToken = NSUserDefaults.standardUserDefaults().valueForKey(kSessionTokenKey) as? String
-        if swgSessionToken?.characters.count > 0 {
-            
-            let api = NIKApiInvoker.sharedInstance
-            // build rest path for request, form is <base instance url>/api/v2/<serviceName>/_table/<tableName>
-            let serviceName = kDbServiceName
-            let tableName = "contact_info" // table name
-            
-            let restApiPath = "\(baseUrl)/\(serviceName)/\(tableName)"
-            NSLog("\n\(restApiPath)\n")
-            
-            let headerParams = ["X-DreamFactory-Api-Key": kApiKey,
-                "X-DreamFactory-Session-Token": swgSessionToken!]
-            let contentType = "application/json"
-            
-            // build request body
-            var records: JSONArray = []
-            /*
-            * Format is:
-            *  {
-            *      "resource":[
-            *          {...},
-            *          {...}
-            *      ]
-            *  }
-            *
-            */
-            
-            // fill body with contact details
-            for view in contactEditScrollView.subviews {
-                if let view = view as? ContactInfoView {
-                    if view.record.id == nil {
-                        view.record.id = NSNumber(integer: 0)
-                        view.record.contactId = contactRecord!.id
-                        view.updateRecord()
-                        records.append(view.buildToDiciontary())
-                        contactDetails!.append(view.record)
-                    }
-                }
-            }
-            
-            // make sure we don't try to put contact info up on the server if we don't have any
-            // need to check down here because of the way they are set up
-            if records.isEmpty {
-                dispatch_async(dispatch_get_main_queue()) {
-                    self.waitToGoBack()
-                }
-                return
-            }
-            
-            let requestBody: [String: AnyObject] = ["resource": records]
-            
-            api.restPath(restApiPath, method: "POST", queryParams: nil, body: requestBody, headerParams: headerParams, contentType: contentType, completionBlock: { (response, error) -> Void in
-                if let error = error {
-                    NSLog("Error putting contact details back up on server: \(error)")
-                    dispatch_async(dispatch_get_main_queue()) {
-                        self.navigationController?.popToRootViewControllerAnimated(true)
-                    }
-                } else {
-                    // head back up only once all the data has been loaded
-                    dispatch_async(dispatch_get_main_queue()) {
-                        self.waitToGoBack()
-                    }
-                }
-            })
-        }
-    }
-    
-    private func createProfileImageFolderOnServer() {
+        // build request body
+        var records: JSONArray = []
+        /*
+        * Format is:
+        *  {
+        *      "resource":[
+        *          {...},
+        *          {...}
+        *      ]
+        *  }
+        *
+        */
         
-        let swgSessionToken = NSUserDefaults.standardUserDefaults().valueForKey(kSessionTokenKey) as? String
-        if swgSessionToken?.characters.count > 0 {
-            
-            let api = NIKApiInvoker.sharedInstance
-            
-            // build rest path for request, form is <base instance url>/api/v2/files/container/<folder path>/
-            // here the folder path is contactId/
-            let containerName = kContainerName
-            let folderPath = "/\(contactRecord!.id)"
-            
-            // note that you need the extra '/' here at the end of the api path because
-            // the url is pointing to a folder
-            let restApiPath = "\(baseUrl)/files/\(containerName)/\(folderPath)/"
-            NSLog("\nAPI path: \(restApiPath)\n")
-            
-            let headerParams = ["X-DreamFactory-Api-Key": kApiKey,
-                "X-DreamFactory-Session-Token": swgSessionToken!]
-            let contentType = "application/json"
-            
-            api.restPath(restApiPath, method: "POST", queryParams: nil, body: nil, headerParams: headerParams, contentType: contentType, completionBlock: { (response, error) -> Void in
-                if let error = error {
-                    NSLog("Error creating new profile image folder on server: \(error)")
-                    dispatch_async(dispatch_get_main_queue()) {
-                        self.navigationController?.popToRootViewControllerAnimated(true)
-                    }
-                } else {
-                    dispatch_async(dispatch_get_main_queue()) {
-                        // if we created the profile image folder successfully, go create
-                        // the image
-                        self.putLocalImageOnServer(self.profileImage!, updatingContact: false)
-                    }
+        // fill body with contact details
+        for view in contactEditScrollView.subviews {
+            if let view = view as? ContactInfoView {
+                if view.record.id == nil {
+                    view.record.id = NSNumber(integer: 0)
+                    view.record.contactId = contactRecord!.id
+                    view.updateRecord()
+                    records.append(view.buildToDiciontary())
+                    contactDetails!.append(view.record)
                 }
-            })
+            }
         }
+        
+        // make sure we don't try to put contact info up on the server if we don't have any
+        // need to check down here because of the way they are set up
+        if records.isEmpty {
+            dispatch_async(dispatch_get_main_queue()) {
+                self.waitToGoBack()
+            }
+            return
+        }
+        
+        RESTEngine.sharedEngine.addContactInfoToServer(records, success: { _ in
+            // head back up only once all the data has been loaded
+            dispatch_async(dispatch_get_main_queue()) {
+                self.waitToGoBack()
+            }
+            }, failure: { error in
+                NSLog("Error putting contact details back up on server: \(error)")
+                dispatch_async(dispatch_get_main_queue()) {
+                    self.navigationController?.popToRootViewControllerAnimated(true)
+                }
+        })
     }
     
-    private func putLocalImageOnServer(image: UIImage, updatingContact update: Bool) {
-        let swgSessionToken = NSUserDefaults.standardUserDefaults().valueForKey(kSessionTokenKey) as? String
-        if swgSessionToken?.characters.count > 0 {
-            
-            let api = NIKApiInvoker.sharedInstance
-            
-            // build rest path for request, form is <base instance url>/api/v2/files/container/<folder path>/filename
-            // here the folder path is contactId/
-            // the file path does not end in a '/' because we are targeting a file not a folder
-            let containerName = kContainerName
-            let folderPath = "/\(contactRecord!.id)"
-            var fileName = "UserFile1.jpg" // default file name
-            if !imageURL.isEmpty {
-                fileName = "\(imageURL).jpg"
-            }
-            
-            let restApiPath = "\(baseUrl)/files/\(containerName)/\(folderPath)/\(fileName)"
-            NSLog("\nAPI path: \(restApiPath)\n")
-            
-            let headerParams = ["X-DreamFactory-Api-Key": kApiKey,
-                "X-DreamFactory-Session-Token": swgSessionToken!]
-            let contentType = "application/json"
-            
-            let imageData = UIImageJPEGRepresentation(image, 0.1)
-            let file = NIKFile(name: fileName, mimeType: "application/octet-stream", data: imageData!)
-            
-            api.restPath(restApiPath, method: "POST", queryParams: nil, body: file, headerParams: headerParams, contentType: contentType, completionBlock: { (response, error) -> Void in
-                if let error = error {
-                    NSLog("Error putting profile image on server: \(error)")
-                    dispatch_async(dispatch_get_main_queue()) {
-                        self.navigationController?.popToRootViewControllerAnimated(true)
-                    }
-                } else {
-                    if update {
-                        self.contactRecord?.imageURL = fileName
-                        self.updateContactWithServer()
-                    } else {
-                        self.addContactGroupRelationToServer()
-                    }
-                }
-            })
+    private func createProfileImageOnServer() {
+        var fileName = "UserFile1.jpg" // default file name
+        if !imageURL.isEmpty {
+            fileName = "\(imageURL).jpg"
         }
+        
+        RESTEngine.sharedEngine.addContactImageWithContactId(contactRecord!.id, image: self.profileImage!, imageName: fileName, success: { _in in
+                self.addContactGroupRelationToServer()
+            }, failure: { error in
+                NSLog("Error creating new profile image folder on server: \(error)")
+                dispatch_async(dispatch_get_main_queue()) {
+                    self.navigationController?.popToRootViewControllerAnimated(true)
+                }
+        })
+    }
+    
+    private func putLocalImageOnServer(image: UIImage) {
+        var fileName = "UserFile1.jpg" // default file name
+        if !imageURL.isEmpty {
+            fileName = "\(imageURL).jpg"
+        }
+        
+        RESTEngine.sharedEngine.putImageToFolderWithPath("\(contactRecord!.id)", image: image, fileName: fileName, success: { _ in
+            self.contactRecord?.imageURL = fileName
+            self.updateContactWithServer()
+            
+            }, failure: { error in
+                NSLog("Error creating image on server: \(error)")
+                dispatch_async(dispatch_get_main_queue()) {
+                    self.navigationController?.popToRootViewControllerAnimated(true)
+            }
+        })
     }
     
     private func updateContactWithServer() {
-        // Update an existing contact with the server
-        let swgSessionToken = NSUserDefaults.standardUserDefaults().valueForKey(kSessionTokenKey) as? String
-        if swgSessionToken?.characters.count > 0 {
-            
-            let api = NIKApiInvoker.sharedInstance
-            // build rest path for request, form is <base instance url>/api/v2/<serviceName>/_table/<tableName>
-            let serviceName = kDbServiceName
-            let tableName = "contact" // table name
-            
-            let restApiPath = "\(baseUrl)/\(serviceName)/\(tableName)"
-            NSLog("\n\(restApiPath)\n")
-            
-            // set the id of the contact we are looking at
-            let queryParams: [String: AnyObject] = ["ids": contactRecord!.id.stringValue]
-            
-            let headerParams = ["X-DreamFactory-Api-Key": kApiKey,
-                "X-DreamFactory-Session-Token": swgSessionToken!]
-            let contentType = "application/json"
-            
-            let requestBody: [String: AnyObject] = ["first_name": textFields["First Name"]!.text!,
-                "last_name": textFields["Last Name"]!.text!,
-                "notes": textFields["Notes"]!.text!,
-                "twitter": textFields["Twitter"]!.text!,
-                "skype": textFields["Skype"]!.text!]
-            
-            // update the contact
-            contactRecord!.firstName = requestBody["first_name"] as! String
-            contactRecord!.lastName = requestBody["last_name"] as! String
-            contactRecord!.notes = requestBody["notes"] as! String
-            contactRecord!.twitter = requestBody["twitter"] as! String
-            contactRecord!.skype = requestBody["skype"] as! String
-            
-            api.restPath(restApiPath, method: "PATCH", queryParams: queryParams, body: requestBody, headerParams: headerParams, contentType: contentType, completionBlock: { (response, error) -> Void in
-                if let error = error {
-                    NSLog("Error updating contact info with server: \(error)")
-                    dispatch_async(dispatch_get_main_queue()) {
-                        self.navigationController?.popToRootViewControllerAnimated(true)
-                    }
-                } else {
-                    self.updateContactInfoWithServer()
+        let requestBody: [String: AnyObject] = ["first_name": textFields["First Name"]!.text!,
+            "last_name": textFields["Last Name"]!.text!,
+            "notes": textFields["Notes"]!.text!,
+            "twitter": textFields["Twitter"]!.text!,
+            "skype": textFields["Skype"]!.text!]
+        
+        // update the contact
+        contactRecord!.firstName = requestBody["first_name"] as! String
+        contactRecord!.lastName = requestBody["last_name"] as! String
+        contactRecord!.notes = requestBody["notes"] as! String
+        contactRecord!.twitter = requestBody["twitter"] as! String
+        contactRecord!.skype = requestBody["skype"] as! String
+        
+        RESTEngine.sharedEngine.updateContactWithContactId(contactRecord!.id, contactDetails: requestBody, success: { _ in
+            self.updateContactInfoWithServer()
+            }, failure: { error in
+                NSLog("Error updating contact info with server: \(error)")
+                dispatch_async(dispatch_get_main_queue()) {
+                    self.navigationController?.popToRootViewControllerAnimated(true)
                 }
-            })
-        }
+        })
     }
     
     private func updateContactInfoWithServer() {
-        // Update contact info
-        let swgSessionToken = NSUserDefaults.standardUserDefaults().valueForKey(kSessionTokenKey) as? String
-        if swgSessionToken?.characters.count > 0 {
-            
-            let api = NIKApiInvoker.sharedInstance
-            // build rest path for request, form is <base instance url>/api/v2/<serviceName>/_table/<tableName>
-            let serviceName = kDbServiceName
-            let tableName = "contact_info" // table name
-            
-            let restApiPath = "\(baseUrl)/\(serviceName)/\(tableName)"
-            NSLog("\n\(restApiPath)\n")
-            
-            let headerParams = ["X-DreamFactory-Api-Key": kApiKey,
-                "X-DreamFactory-Session-Token": swgSessionToken!]
-            let contentType = "application/json"
-            
-            // build request body
-            var records: JSONArray = []
-            
-            for view in contactEditScrollView.subviews {
-                if let view = view as? ContactInfoView {
-                    if view.record.contactId != nil {
-                        view.updateRecord()
-                        records.append(view.buildToDiciontary())
-                    }
+        // build request body
+        var records: JSONArray = []
+        
+        for view in contactEditScrollView.subviews {
+            if let view = view as? ContactInfoView {
+                if view.record.contactId != nil {
+                    view.updateRecord()
+                    records.append(view.buildToDiciontary())
                 }
             }
-            
-            if records.isEmpty {
-                // if we have no records to update, check if we have any records to add
-                addContactInfoToServer()
-                return
-            }
-            
-            let requestBody: AnyObject = ["resource": records]
-            
-            api.restPath(restApiPath, method: "PATCH", queryParams: nil, body: requestBody, headerParams: headerParams, contentType: contentType, completionBlock: { (response, error) -> Void in
-                if let error = error {
-                    NSLog("Error updating contact details on server: \(error)")
-                    dispatch_async(dispatch_get_main_queue()) {
-                        self.navigationController?.popToRootViewControllerAnimated(true)
-                    }
-                } else {
-                    self.addContactInfoToServer()
-                }
-            })
         }
+        
+        if records.isEmpty {
+            // if we have no records to update, check if we have any records to add
+            addContactInfoToServer()
+            return
+        }
+        
+        RESTEngine.sharedEngine.updateContactInfo(records, success: { _ in
+            self.addContactInfoToServer()
+            }, failure: { error in
+                NSLog("Error updating contact details on server: \(error)")
+                dispatch_async(dispatch_get_main_queue()) {
+                    self.navigationController?.popToRootViewControllerAnimated(true)
+                }
+        })
     }
     
     private func waitToGoBack() {
         if let contactViewController = contactViewController {
-            dispatch_async(dispatch_queue_create("contactListShowQueue", nil)) {
+            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)) {
                 contactViewController.prefetch()
                 contactViewController.waitToReady()
                 self.contactViewController = nil

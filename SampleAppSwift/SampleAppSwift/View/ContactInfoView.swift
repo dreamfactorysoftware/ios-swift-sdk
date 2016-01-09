@@ -8,7 +8,7 @@
 
 import UIKit
 
-class ContactInfoView: UIView {
+class ContactInfoView: UIView, UITextFieldDelegate {
     var record: ContactDetailRecord! {
         didSet {
             updateFields()
@@ -96,10 +96,18 @@ class ContactInfoView: UIView {
             textField.font = UIFont(name: "Helvetica Neue", size: 20.0)
             textField.backgroundColor = UIColor.whiteColor()
             textField.layer.cornerRadius = 5
+            textField.delegate = self
             addSubview(textField)
             
             textFields[field] = textField
             y += 40
         }
+    }
+    
+    //MARK: - Text field delegate
+    
+    func textFieldShouldReturn(textField: UITextField) -> Bool {
+        textField.resignFirstResponder()
+        return true
     }
 }
