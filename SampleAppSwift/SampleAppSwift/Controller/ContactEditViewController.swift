@@ -127,8 +127,8 @@ class ContactEditViewController: UIViewController, ProfileImagePickerDelegate, U
         let contactInfoView = ContactInfoView(frame: CGRectMake(0, y, contactEditScrollView.frame.size.width, 0))
         let record = ContactDetailRecord()
         addedContactInfo.append(record)
-        
         contactEditScrollView.addSubview(contactInfoView)
+        contactInfoView.record = record
     }
     
     func onChangeImageClick() {
@@ -200,6 +200,7 @@ class ContactEditViewController: UIViewController, ProfileImagePickerDelegate, U
                 let y = CGRectGetMaxY(contactEditScrollView.subviews.last!.frame)
                 let contactInfoView = ContactInfoView(frame: CGRectMake(0, y, view.frame.size.width, 40))
                 contactInfoView.record = record
+                contactInfoView.updateFields()
                 
                 contactEditScrollView.addSubview(contactInfoView)
                 contactInfoViewHeight = contactInfoView.frame.size.height
@@ -302,7 +303,7 @@ class ContactEditViewController: UIViewController, ProfileImagePickerDelegate, U
         // fill body with contact details
         for view in contactEditScrollView.subviews {
             if let view = view as? ContactInfoView {
-                if view.record.id == nil {
+                if view.record?.id == nil {
                     view.record.id = NSNumber(integer: 0)
                     view.record.contactId = contactRecord!.id
                     view.updateRecord()

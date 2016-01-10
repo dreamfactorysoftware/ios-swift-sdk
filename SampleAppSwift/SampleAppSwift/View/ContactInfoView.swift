@@ -9,11 +9,7 @@
 import UIKit
 
 class ContactInfoView: UIView, UITextFieldDelegate {
-    var record: ContactDetailRecord! {
-        didSet {
-            updateFields()
-        }
-    }
+    var record: ContactDetailRecord!
     private var textFields: [String: UITextField]!
     
     override init(frame: CGRect) {
@@ -59,7 +55,7 @@ class ContactInfoView: UIView, UITextFieldDelegate {
                 "country": record.country]
     }
     
-    private func updateFields() {
+    func updateFields() {
         putFieldIn(record.type, key: "Type")
         putFieldIn(record.phone, key: "Phone")
         putFieldIn(record.email, key: "Email")

@@ -232,6 +232,19 @@ class ContactViewController: UIViewController {
     }
     
     private func buildContactView() {
+        // clear out the view
+        dispatch_sync(dispatch_get_main_queue()) {
+            if let contactDetailScrollView = self.contactDetailScrollView {
+                for view in contactDetailScrollView.subviews {
+                    view.removeFromSuperview()
+                }
+            }
+        }
+        
+        // get the profile image
+        let profileImageView = UIImageView(frame: CGRectMake(0, 0, view.frame.size.width * 0.6, view.frame.size.width * 0.5))
+        getProfileImageFromServerToImageView(profileImageView)
+        
         viewLock.lock()
         while !viewReady {
             viewLock.wait()
@@ -242,20 +255,9 @@ class ContactViewController: UIViewController {
             return
         }
         
-        // clear out the view
-        dispatch_sync(dispatch_get_main_queue()) {
-            for view in self.contactDetailScrollView.subviews {
-                view.removeFromSuperview()
-            }
-        }
-        
-        // get the profile image
-        let profileImageView = UIImageView(frame: CGRectMake(0, 0, view.frame.size.width * 0.6, view.frame.size.width * 0.5))
-        getProfileImageFromServerToImageView(profileImageView)
-        
         // track the y of the furthest item down in the view
         var y: CGFloat = 0
-        dispatch_async(dispatch_get_main_queue()) {
+        dispatch_sync(dispatch_get_main_queue()) {
             profileImageView.center = CGPointMake(self.view.frame.size.width * 0.5, profileImageView.frame.size.height * 0.5)
             y = profileImageView.frame.size.height + 5.0
             
@@ -312,20 +314,14 @@ class ContactViewController: UIViewController {
                 
                 y += notesLabel.frame.size.height + 10
             }
-        }
-        
-        // add all the addresses
-        dispatch_async(dispatch_get_main_queue()) {
+            
+            // add all the addresses
             for record in self.contactDetails {
                 let toAdd = self.buildAddressViewForRecord(record, y: y, buffer: 25)
                 toAdd.backgroundColor = UIColor(red: 112/255.0, green: 147/255.0, blue: 181/255.0, alpha: 1.0)
                 y += toAdd.frame.size.height + 25
                 self.contactDetailScrollView.addSubview(toAdd)
             }
-        }
-        
-        dispatch_sync(dispatch_get_main_queue()) {
-            self.contactDetailScrollView.reloadInputViews()
         }
         
         // wait until the group is ready to build group list subviews
@@ -342,11 +338,8 @@ class ContactViewController: UIViewController {
             toAdd.frame = frame
             
             self.contactDetailScrollView.addSubview(toAdd)
-        }
-        
-        // resize the scroll view content
-        
-        dispatch_async(dispatch_get_main_queue()) {
+            
+            // resize the scroll view content
             var contectRect = CGRectZero
             for view in self.contactDetailScrollView.subviews {
                 contectRect = CGRectUnion(contectRect, view.frame)
