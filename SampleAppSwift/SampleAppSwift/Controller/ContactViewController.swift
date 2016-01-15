@@ -224,8 +224,8 @@ class ContactViewController: UIViewController {
         // resize the subview
         var viewFrame = subView.frame
         viewFrame.size.height = y + 20
-        view.frame.origin.x = view.frame.size.width * 0.06
-        view.frame.size.width = view.frame.size.width * 0.88
+        viewFrame.origin.x = view.frame.size.width * 0.06
+        viewFrame.size.width = view.frame.size.width * 0.88
         subView.frame = viewFrame
         
         return subView
@@ -344,7 +344,7 @@ class ContactViewController: UIViewController {
             for view in self.contactDetailScrollView.subviews {
                 contectRect = CGRectUnion(contectRect, view.frame)
             }
-            self.contactDetailScrollView.contentSize = contectRect.size
+            self.contactDetailScrollView.contentSize = CGSizeMake(self.contactDetailScrollView.frame.size.width, contectRect.size.height)
             self.contactDetailScrollView.reloadInputViews()
         }
     }
