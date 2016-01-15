@@ -16,11 +16,22 @@ private let kBaseInstanceUrl = "https://df-test-gm.enterprise.dreamfactory.com/a
 private let kDbServiceName = "db/_table"
 private let kContainerName = "profile_images"
 
+let kAppVersion = "1.0.0"
 let kUserEmail = "UserEmail"
 let kPassword = "UserPassword"
 
 typealias SuccessClosure = (JSON?) -> Void
 typealias ErrorClosure = (NSError) -> Void
+
+extension NSError {
+    
+    var errorMessage: String {
+        if let errorMessage = self.userInfo["error"]?["message"] as? String {
+            return errorMessage
+        }
+        return "Unknown error occurred"
+    }
+}
 
 /**
  Routing to different type of API resources
@@ -312,7 +323,7 @@ final class RESTEngine {
         // request without related would return just {id, groupId, contactId}
         // set the related field to go get the contact records referenced by
         // each contact_group_relationship record
-        queryParams["related"] = "contact_by_contact_id";
+        queryParams["related"] = "contact_by_contact_id"
         
         callApiWithPath(Routing.Service(tableName: "contact_group_relationship").path, method: "GET", queryParams: queryParams, body: nil, headerParams: sessionHeaderParams, success: success, failure: failure)
     }
@@ -359,7 +370,6 @@ final class RESTEngine {
         
         callApiWithPath(Routing.ResourceFolder(folderPath: "\(contactId)").path, method: "DELETE", queryParams: queryParams, body: nil, headerParams: sessionHeaderParams, success: success, failure: failure)
     }
-    
     
     /**
      Get contact info from server

@@ -107,6 +107,7 @@ class AddressBookViewController: UITableViewController {
             }, failure: { error in
                 NSLog("Error getting address book data: \(error)")
                 dispatch_async(dispatch_get_main_queue()) {
+                    Alert.showAlertWithMessage(error.errorMessage, fromViewController: self)
                     self.navigationController?.popToRootViewControllerAnimated(true)
                 }
         })
@@ -116,6 +117,7 @@ class AddressBookViewController: UITableViewController {
         RESTEngine.sharedEngine.removeGroupFromServerWithGroupId(groupId, success: nil, failure: { error in
             NSLog("Error deleting group: \(error)")
             dispatch_async(dispatch_get_main_queue()) {
+                Alert.showAlertWithMessage(error.errorMessage, fromViewController: self)
                 self.navigationController?.popToRootViewControllerAnimated(true)
             }
         })

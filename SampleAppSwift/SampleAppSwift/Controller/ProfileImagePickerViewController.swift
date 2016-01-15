@@ -132,6 +132,7 @@ class ProfileImagePickerViewController: UIViewController, UITableViewDataSource,
                 // else report normally
                 NSLog("Error getting profile image list data from server: \(error)")
                 dispatch_async(dispatch_get_main_queue()) {
+                    Alert.showAlertWithMessage(error.errorMessage, fromViewController: self)
                     self.navigationController?.popToRootViewControllerAnimated(true)
                 }
         })

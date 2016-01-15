@@ -8,11 +8,23 @@
 
 import UIKit
 
+protocol ContactInfoDelegate: class {
+    func onContactTypeClick(view: ContactInfoView, withTypes types:[String])
+}
+
 class ContactInfoView: UIView, UITextFieldDelegate {
     var record: ContactDetailRecord!
     private var textFields: [String: UITextField]!
+    private let contactTypes: [String]
+    weak var delegate: ContactInfoDelegate!
+    var contactType: String! {
+        didSet {
+            self.textFields["Type"]?.text = contactType
+        }
+    }
     
     override init(frame: CGRect) {
+        self.contactTypes = ["work", "home", "mobile", "other"]
         super.init(frame: frame)
         
         buildContactTextFields(["Type", "Phone", "Email", "Address", "City", "State", "Zip", "Country"], y: 0)
@@ -97,7 +109,22 @@ class ContactInfoView: UIView, UITextFieldDelegate {
             
             textFields[field] = textField
             y += 40
+            
+            if field == "Type" {
+                textField.enabled = false
+                let button = UIButton(type: .System)
+                button.frame = textField.frame
+                button.setTitle("", forState: .Normal)
+                button.backgroundColor = UIColor.clearColor()
+                button.addTarget(self, action: "onContactTypeClick", forControlEvents: .TouchDown)
+                self.addSubview(button)
+                textField.text = contactTypes[0]
+            }
         }
+    }
+    
+    func onContactTypeClick() {
+        delegate.onContactTypeClick(self, withTypes: self.contactTypes)
     }
     
     //MARK: - Text field delegate

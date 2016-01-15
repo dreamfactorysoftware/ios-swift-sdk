@@ -379,6 +379,7 @@ class ContactViewController: UIViewController {
             }, failure: { error in
                 NSLog("Error getting contact info: \(error)")
                 dispatch_async(dispatch_get_main_queue()) {
+                    Alert.showAlertWithMessage(error.errorMessage, fromViewController: self)
                     self.navigationController?.popToRootViewControllerAnimated(true)
                 }
         })
@@ -470,6 +471,7 @@ class ContactViewController: UIViewController {
             }, failure: { error in
                 NSLog("Error getting groups with relation: \(error)")
                 dispatch_async(dispatch_get_main_queue()) {
+                    Alert.showAlertWithMessage(error.errorMessage, fromViewController: self)
                     self.navigationController?.popToRootViewControllerAnimated(true)
                 }
         })

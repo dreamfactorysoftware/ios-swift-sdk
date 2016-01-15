@@ -8,7 +8,7 @@
 
 import UIKit
 
-class ContactEditViewController: UIViewController, ProfileImagePickerDelegate, UITextFieldDelegate {
+class ContactEditViewController: UIViewController, ProfileImagePickerDelegate, UITextFieldDelegate, ContactInfoDelegate, PickerSelectorDelegate {
     @IBOutlet weak var contactEditScrollView: UIScrollView!
     
     weak var contactViewController: ContactViewController?
@@ -34,6 +34,7 @@ class ContactEditViewController: UIViewController, ProfileImagePickerDelegate, U
     private var imageURL = ""
     private var profileImage: UIImage?
     
+    private weak var selectedContactInfoView: ContactInfoView!
     private weak var addButtonRef: UIButton! // reference to bottom AddButton
     private var contactInfoViewHeight: CGFloat = 0 // stores contact view height
     
@@ -125,6 +126,8 @@ class ContactEditViewController: UIViewController, ProfileImagePickerDelegate, U
         
         // build new view
         let contactInfoView = ContactInfoView(frame: CGRectMake(0, y, contactEditScrollView.frame.size.width, 0))
+        contactInfoView.delegate = self
+        
         let record = ContactDetailRecord()
         addedContactInfo.append(record)
         contactEditScrollView.addSubview(contactInfoView)
@@ -154,11 +157,26 @@ class ContactEditViewController: UIViewController, ProfileImagePickerDelegate, U
         self.profileImage = image
     }
     
-    //MARK: - Text field delegate
+    // MARK: - Text field delegate
     
     func textFieldShouldReturn(textField: UITextField) -> Bool {
         textField.resignFirstResponder()
         return true
+    }
+    
+    // MARK: - ContactInfo delegate
+    func onContactTypeClick(view: ContactInfoView, withTypes types: [String]) {
+        let picker = PickerSelector()
+        picker.pickerData = types
+        picker.delegate = self
+        picker.showPickerOver(self)
+        selectedContactInfoView = view
+    }
+    
+    // MARK: - Picker delegate
+    
+    func pickerSelector(selector: PickerSelector, selectedValue value: String, index: Int) {
+        selectedContactInfoView.contactType = value
     }
     
     // MARK: - Private methods
@@ -199,6 +217,8 @@ class ContactEditViewController: UIViewController, ProfileImagePickerDelegate, U
             for record in contactDetails {
                 let y = CGRectGetMaxY(contactEditScrollView.subviews.last!.frame)
                 let contactInfoView = ContactInfoView(frame: CGRectMake(0, y, view.frame.size.width, 40))
+                contactInfoView.delegate = self
+                
                 contactInfoView.record = record
                 contactInfoView.updateFields()
                 
@@ -269,6 +289,7 @@ class ContactEditViewController: UIViewController, ProfileImagePickerDelegate, U
             }, failure: { error in
                 NSLog("Error adding new contact to server: \(error)")
                 dispatch_async(dispatch_get_main_queue()) {
+                    Alert.showAlertWithMessage(error.errorMessage, fromViewController: self)
                     self.navigationController?.popToRootViewControllerAnimated(true)
                 }
         })
@@ -281,6 +302,7 @@ class ContactEditViewController: UIViewController, ProfileImagePickerDelegate, U
             }, failure: { error in
                 NSLog("Error adding contact group relation to server from contact edit: \(error)")
                 dispatch_async(dispatch_get_main_queue()) {
+                    Alert.showAlertWithMessage(error.errorMessage, fromViewController: self)
                     self.navigationController?.popToRootViewControllerAnimated(true)
                 }
         })
@@ -330,6 +352,7 @@ class ContactEditViewController: UIViewController, ProfileImagePickerDelegate, U
             }, failure: { error in
                 NSLog("Error putting contact details back up on server: \(error)")
                 dispatch_async(dispatch_get_main_queue()) {
+                    Alert.showAlertWithMessage(error.errorMessage, fromViewController: self)
                     self.navigationController?.popToRootViewControllerAnimated(true)
                 }
         })
@@ -346,6 +369,7 @@ class ContactEditViewController: UIViewController, ProfileImagePickerDelegate, U
             }, failure: { error in
                 NSLog("Error creating new profile image folder on server: \(error)")
                 dispatch_async(dispatch_get_main_queue()) {
+                    Alert.showAlertWithMessage(error.errorMessage, fromViewController: self)
                     self.navigationController?.popToRootViewControllerAnimated(true)
                 }
         })
@@ -364,6 +388,7 @@ class ContactEditViewController: UIViewController, ProfileImagePickerDelegate, U
             }, failure: { error in
                 NSLog("Error creating image on server: \(error)")
                 dispatch_async(dispatch_get_main_queue()) {
+                    Alert.showAlertWithMessage(error.errorMessage, fromViewController: self)
                     self.navigationController?.popToRootViewControllerAnimated(true)
             }
         })
@@ -388,6 +413,7 @@ class ContactEditViewController: UIViewController, ProfileImagePickerDelegate, U
             }, failure: { error in
                 NSLog("Error updating contact info with server: \(error)")
                 dispatch_async(dispatch_get_main_queue()) {
+                    Alert.showAlertWithMessage(error.errorMessage, fromViewController: self)
                     self.navigationController?.popToRootViewControllerAnimated(true)
                 }
         })
@@ -417,6 +443,7 @@ class ContactEditViewController: UIViewController, ProfileImagePickerDelegate, U
             }, failure: { error in
                 NSLog("Error updating contact details on server: \(error)")
                 dispatch_async(dispatch_get_main_queue()) {
+                    Alert.showAlertWithMessage(error.errorMessage, fromViewController: self)
                     self.navigationController?.popToRootViewControllerAnimated(true)
                 }
         })

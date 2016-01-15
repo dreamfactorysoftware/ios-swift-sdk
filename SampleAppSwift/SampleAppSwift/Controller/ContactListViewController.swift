@@ -363,6 +363,7 @@ class ContactListViewController: UITableViewController, UISearchBarDelegate {
                     if message != nil && message!.containsString("Invalid relationship") {
                         NSLog("Error: table names in relational calls are case sensitive: \(message)")
                         dispatch_async(dispatch_get_main_queue()) {
+                            Alert.showAlertWithMessage(message!, fromViewController: self)
                             self.navigationController?.popToRootViewControllerAnimated(true)
                         }
                         return
@@ -370,6 +371,7 @@ class ContactListViewController: UITableViewController, UISearchBarDelegate {
                 }
                 NSLog("Error getting contacts with relation: \(error)")
                 dispatch_async(dispatch_get_main_queue()) {
+                    Alert.showAlertWithMessage(error.errorMessage, fromViewController: self)
                     self.navigationController?.popToRootViewControllerAnimated(true)
                 }
         })
@@ -385,6 +387,7 @@ class ContactListViewController: UITableViewController, UISearchBarDelegate {
             }, failure: { error in
                 NSLog("Error deleting contact: \(error)")
                 dispatch_async(dispatch_get_main_queue()) {
+                    Alert.showAlertWithMessage(error.errorMessage, fromViewController: self)
                     self.navigationController?.popToRootViewControllerAnimated(true)
                 }
         })

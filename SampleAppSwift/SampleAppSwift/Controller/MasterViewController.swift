@@ -12,9 +12,12 @@ class MasterViewController: UIViewController {
     
     @IBOutlet weak var emailTextField: UITextField!
     @IBOutlet weak var passwordTextField: UITextField!
+    @IBOutlet weak var versionLabel: UILabel!
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        versionLabel.text = "Version \(kAppVersion)"
         
         // check if login credentials are already stored
         let userEmail = NSUserDefaults.standardUserDefaults().valueForKey(kUserEmail) as? String
@@ -68,15 +71,11 @@ class MasterViewController: UIViewController {
                 }, failure: { error in
                     NSLog("Error logging in user: \(error)")
                     dispatch_async(dispatch_get_main_queue()) {
-                        let alert = UIAlertController(title: nil, message: "Error, invalid password", preferredStyle: .Alert)
-                        alert.addAction(UIAlertAction(title: "OK", style: .Default, handler: nil))
-                        self.presentViewController(alert, animated: true, completion: nil)
+                        Alert.showAlertWithMessage(error.errorMessage, fromViewController: self)
                     }
                 })
         } else {
-            let alert = UIAlertController(title: nil, message: "Enter email and password", preferredStyle: .Alert)
-            alert.addAction(UIAlertAction(title: "OK", style: .Default, handler: nil))
-            presentViewController(alert, animated: true, completion: nil)
+            Alert.showAlertWithMessage("Enter email and password", fromViewController: self)
         }
     }
     

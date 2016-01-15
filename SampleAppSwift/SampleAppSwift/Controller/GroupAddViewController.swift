@@ -328,6 +328,7 @@ class GroupAddViewController: UIViewController, UITableViewDataSource, UITableVi
             }, failure: { error in
                 NSLog("Error getting all the contacts data: \(error)")
                 dispatch_async(dispatch_get_main_queue()) {
+                    Alert.showAlertWithMessage(error.errorMessage, fromViewController: self)
                     self.navigationController?.popToRootViewControllerAnimated(true)
                 }
         })
@@ -342,6 +343,7 @@ class GroupAddViewController: UIViewController, UITableViewDataSource, UITableVi
             }, failure: { error in
                 NSLog("Error adding group to server: \(error)")
                 dispatch_async(dispatch_get_main_queue()) {
+                    Alert.showAlertWithMessage(error.errorMessage, fromViewController: self)
                     self.navigationController?.popToRootViewControllerAnimated(true)
                 }
         })
@@ -357,6 +359,7 @@ class GroupAddViewController: UIViewController, UITableViewDataSource, UITableVi
             }, failure: { error in
                 NSLog("Error updating contact info with server: \(error)")
                 dispatch_async(dispatch_get_main_queue()) {
+                    Alert.showAlertWithMessage(error.errorMessage, fromViewController: self)
                     self.navigationController?.popToRootViewControllerAnimated(true)
                 }
         })
@@ -379,6 +382,7 @@ class GroupAddViewController: UIViewController, UITableViewDataSource, UITableVi
             }, failure: { error in
                 NSLog("Error getting contact group relations list: \(error)")
                 dispatch_async(dispatch_get_main_queue()) {
+                    Alert.showAlertWithMessage(error.errorMessage, fromViewController: self)
                     self.navigationController?.popToRootViewControllerAnimated(true)
                 }
         })
