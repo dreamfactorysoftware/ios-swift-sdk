@@ -330,7 +330,7 @@ class ContactEditViewController: UIViewController, ProfileImagePickerDelegate, U
                     view.record.contactId = contactRecord!.id
                     view.updateRecord()
                     records.append(view.buildToDiciontary())
-                    contactDetails!.append(view.record)
+                    contactDetails?.append(view.record)
                 }
             }
         }
