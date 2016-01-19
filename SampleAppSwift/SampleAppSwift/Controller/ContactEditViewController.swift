@@ -290,7 +290,7 @@ class ContactEditViewController: UIViewController, ProfileImagePickerDelegate, U
                 NSLog("Error adding new contact to server: \(error)")
                 dispatch_async(dispatch_get_main_queue()) {
                     Alert.showAlertWithMessage(error.errorMessage, fromViewController: self)
-                    self.navigationController?.popToRootViewControllerAnimated(true)
+                    self.navBar.enableAllTouch()
                 }
         })
     }
@@ -353,7 +353,7 @@ class ContactEditViewController: UIViewController, ProfileImagePickerDelegate, U
                 NSLog("Error putting contact details back up on server: \(error)")
                 dispatch_async(dispatch_get_main_queue()) {
                     Alert.showAlertWithMessage(error.errorMessage, fromViewController: self)
-                    self.navigationController?.popToRootViewControllerAnimated(true)
+                    self.navBar.enableAllTouch()
                 }
         })
     }
@@ -370,7 +370,7 @@ class ContactEditViewController: UIViewController, ProfileImagePickerDelegate, U
                 NSLog("Error creating new profile image folder on server: \(error)")
                 dispatch_async(dispatch_get_main_queue()) {
                     Alert.showAlertWithMessage(error.errorMessage, fromViewController: self)
-                    self.navigationController?.popToRootViewControllerAnimated(true)
+                    self.navBar.enableAllTouch()
                 }
         })
     }
@@ -389,7 +389,7 @@ class ContactEditViewController: UIViewController, ProfileImagePickerDelegate, U
                 NSLog("Error creating image on server: \(error)")
                 dispatch_async(dispatch_get_main_queue()) {
                     Alert.showAlertWithMessage(error.errorMessage, fromViewController: self)
-                    self.navigationController?.popToRootViewControllerAnimated(true)
+                    self.navBar.enableAllTouch()
             }
         })
     }
@@ -414,7 +414,7 @@ class ContactEditViewController: UIViewController, ProfileImagePickerDelegate, U
                 NSLog("Error updating contact info with server: \(error)")
                 dispatch_async(dispatch_get_main_queue()) {
                     Alert.showAlertWithMessage(error.errorMessage, fromViewController: self)
-                    self.navigationController?.popToRootViewControllerAnimated(true)
+                    self.navBar.enableAllTouch()
                 }
         })
     }
@@ -444,7 +444,7 @@ class ContactEditViewController: UIViewController, ProfileImagePickerDelegate, U
                 NSLog("Error updating contact details on server: \(error)")
                 dispatch_async(dispatch_get_main_queue()) {
                     Alert.showAlertWithMessage(error.errorMessage, fromViewController: self)
-                    self.navigationController?.popToRootViewControllerAnimated(true)
+                    self.navBar.enableAllTouch()
                 }
         })
     }

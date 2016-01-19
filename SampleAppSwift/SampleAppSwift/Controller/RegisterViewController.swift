@@ -47,7 +47,6 @@ class RegisterViewController: UIViewController {
                     NSLog("Error registering new user: \(error)")
                     dispatch_async(dispatch_get_main_queue()) {
                         Alert.showAlertWithMessage(error.errorMessage, fromViewController: self)
-                        self.navigationController?.popToRootViewControllerAnimated(true)
                     }
             })
         } else {

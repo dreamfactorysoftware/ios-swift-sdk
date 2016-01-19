@@ -388,7 +388,6 @@ class ContactListViewController: UITableViewController, UISearchBarDelegate {
                 NSLog("Error deleting contact: \(error)")
                 dispatch_async(dispatch_get_main_queue()) {
                     Alert.showAlertWithMessage(error.errorMessage, fromViewController: self)
-                    self.navigationController?.popToRootViewControllerAnimated(true)
                 }
         })
     }
