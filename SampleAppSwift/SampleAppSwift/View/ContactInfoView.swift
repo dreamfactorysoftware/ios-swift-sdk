@@ -68,11 +68,11 @@ class ContactInfoView: UIView, UITextFieldDelegate {
     */
     func validateInfoWithResult(result: (Bool, String?) -> Void) {
         let email = textValueForKey("Email")
-        if email.isEmpty || email.isValidEmail() {
-            return result(true, nil)
-        } else {
+        if !email.isEmpty && !email.isValidEmail() {
             return result(false, "Not a valid email")
         }
+        
+        return result(true, nil)
     }
     
     func buildToDiciontary() -> [String: AnyObject] {
@@ -125,7 +125,6 @@ class ContactInfoView: UIView, UITextFieldDelegate {
             textField.font = UIFont(name: "Helvetica Neue", size: 20.0)
             textField.backgroundColor = UIColor.whiteColor()
             textField.layer.cornerRadius = 5
-            textField.delegate = self
             addSubview(textField)
             
             textFields[field] = textField
@@ -148,10 +147,9 @@ class ContactInfoView: UIView, UITextFieldDelegate {
         delegate.onContactTypeClick(self, withTypes: self.contactTypes)
     }
     
-    //MARK: - Text field delegate
-    
-    func textFieldShouldReturn(textField: UITextField) -> Bool {
-        textField.resignFirstResponder()
-        return true
+    func setTextFieldsDelegate(delegate: UITextFieldDelegate) {
+        for textField in textFields.values {
+            textField.delegate = delegate
+        }
     }
 }

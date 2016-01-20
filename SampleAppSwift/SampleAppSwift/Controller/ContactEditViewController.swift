@@ -36,7 +36,12 @@ class ContactEditViewController: UIViewController, ProfileImagePickerDelegate, U
     
     private weak var selectedContactInfoView: ContactInfoView!
     private weak var addButtonRef: UIButton! // reference to bottom AddButton
+    private weak var activeTextField: UITextField?
     private var contactInfoViewHeight: CGFloat = 0 // stores contact view height
+    
+    deinit {
+        NSNotificationCenter.defaultCenter().removeObserver(self)
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -53,6 +58,7 @@ class ContactEditViewController: UIViewController, ProfileImagePickerDelegate, U
         }
         
         contactEditScrollView.contentSize = contentRect.size
+        registerForKeyboardNotifications()
     }
     
     override func viewWillAppear(animated: Bool) {
@@ -69,6 +75,36 @@ class ContactEditViewController: UIViewController, ProfileImagePickerDelegate, U
         super.viewWillDisappear(animated)
         
         self.navBar.doneButton.removeTarget(self, action: "onDoneButtonClick", forControlEvents: .TouchDown)
+    }
+    
+    private func registerForKeyboardNotifications() {
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: "keyboardWasShown:", name: UIKeyboardDidShowNotification, object: nil)
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: "keyboardWillBeHidden:", name: UIKeyboardWillHideNotification, object: nil)
+    }
+    
+    func keyboardWasShown(notification: NSNotification) {
+        if activeTextField == nil {
+            return
+        }
+        
+        let info = notification.userInfo
+        let kbSize = info![UIKeyboardFrameBeginUserInfoKey]!.CGRectValue.size
+        
+        let contentInsets = UIEdgeInsetsMake(contactEditScrollView.contentInset.top, 0, kbSize.height, 0)
+        contactEditScrollView.contentInset = contentInsets
+        contactEditScrollView.scrollIndicatorInsets = contentInsets
+        
+        var aRect = view.frame
+        aRect.size.height -= kbSize.height
+        if !CGRectContainsPoint(aRect, activeTextField!.frame.origin) {
+            contactEditScrollView.scrollRectToVisible(activeTextField!.frame, animated: true)
+        }
+    }
+    
+    func keyboardWillBeHidden(notification: NSNotification) {
+        let contentInsets = UIEdgeInsetsMake(contactEditScrollView.contentInset.top, 0, 0, 0)
+        contactEditScrollView.contentInset = contentInsets
+        contactEditScrollView.scrollIndicatorInsets = contentInsets
     }
     
     func onDoneButtonClick() {
@@ -127,6 +163,7 @@ class ContactEditViewController: UIViewController, ProfileImagePickerDelegate, U
         // build new view
         let contactInfoView = ContactInfoView(frame: CGRectMake(0, y, contactEditScrollView.frame.size.width, 0))
         contactInfoView.delegate = self
+        contactInfoView.setTextFieldsDelegate(self)
         
         let record = ContactDetailRecord()
         addedContactInfo.append(record)
@@ -162,6 +199,14 @@ class ContactEditViewController: UIViewController, ProfileImagePickerDelegate, U
     func textFieldShouldReturn(textField: UITextField) -> Bool {
         textField.resignFirstResponder()
         return true
+    }
+    
+    func textFieldDidBeginEditing(textField: UITextField) {
+        activeTextField = textField
+    }
+    
+    func textFieldDidEndEditing(textField: UITextField) {
+        activeTextField = nil
     }
     
     // MARK: - ContactInfo delegate
@@ -218,6 +263,7 @@ class ContactEditViewController: UIViewController, ProfileImagePickerDelegate, U
                 let y = CGRectGetMaxY(contactEditScrollView.subviews.last!.frame)
                 let contactInfoView = ContactInfoView(frame: CGRectMake(0, y, view.frame.size.width, 40))
                 contactInfoView.delegate = self
+                contactInfoView.setTextFieldsDelegate(self)
                 
                 contactInfoView.record = record
                 contactInfoView.updateFields()
