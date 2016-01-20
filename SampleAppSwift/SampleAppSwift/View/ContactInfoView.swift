@@ -8,6 +8,14 @@
 
 import UIKit
 
+private extension String {
+    func isValidEmail() -> Bool {
+        let emailRegex = "^.+@([A-Za-z0-9-]+\\.)+[A-Za-z]{2}[A-Za-z]*$";
+        let emailTest = NSPredicate(format: "SELF MATCHES %@", argumentArray: [emailRegex])
+        return emailTest.evaluateWithObject(self)
+    }
+}
+
 protocol ContactInfoDelegate: class {
     func onContactTypeClick(view: ContactInfoView, withTypes types:[String])
 }
@@ -52,6 +60,19 @@ class ContactInfoView: UIView, UITextFieldDelegate {
         record.state = textValueForKey("State")
         record.zipCode = textValueForKey("Zip")
         record.country = textValueForKey("Country")
+    }
+
+    /**
+     Validate email only
+     other validations can be added, e.g. phone number, address
+    */
+    func validateInfoWithResult(result: (Bool, String?) -> Void) {
+        let email = textValueForKey("Email")
+        if email.isEmpty || email.isValidEmail() {
+            return result(true, nil)
+        } else {
+            return result(false, "Not a valid email")
+        }
     }
     
     func buildToDiciontary() -> [String: AnyObject] {

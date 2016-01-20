@@ -325,9 +325,24 @@ class ContactEditViewController: UIViewController, ProfileImagePickerDelegate, U
         // fill body with contact details
         for view in contactEditScrollView.subviews {
             if let view = view as? ContactInfoView {
-                if view.record?.id == nil {
+                if view.record?.id == nil || view.record?.id == 0 {
                     view.record.id = NSNumber(integer: 0)
                     view.record.contactId = contactRecord!.id
+                    
+                    var shouldBreak = false
+                    view.validateInfoWithResult { success, message in
+                        shouldBreak = !success
+                        if !success {
+                            dispatch_async(dispatch_get_main_queue()) {
+                                Alert.showAlertWithMessage(message!, fromViewController: self)
+                                self.navBar.enableAllTouch()
+                            }
+                        }
+                    }
+                    if shouldBreak {
+                        return
+                    }
+                    
                     view.updateRecord()
                     records.append(view.buildToDiciontary())
                     contactDetails?.append(view.record)
@@ -426,8 +441,25 @@ class ContactEditViewController: UIViewController, ProfileImagePickerDelegate, U
         for view in contactEditScrollView.subviews {
             if let view = view as? ContactInfoView {
                 if view.record.contactId != nil {
+                    
+                    var shouldBreak = false
+                    view.validateInfoWithResult { success, message in
+                        shouldBreak = !success
+                        if !success {
+                            dispatch_async(dispatch_get_main_queue()) {
+                                Alert.showAlertWithMessage(message!, fromViewController: self)
+                                self.navBar.enableAllTouch()
+                            }
+                        }
+                    }
+                    if shouldBreak {
+                        return
+                    }
+                    
                     view.updateRecord()
-                    records.append(view.buildToDiciontary())
+                    if view.record.id != 0 {
+                        records.append(view.buildToDiciontary())
+                    }
                 }
             }
         }
