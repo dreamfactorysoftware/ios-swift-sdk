@@ -1,0 +1,6 @@
+{
+  "name": "Address Book for iOS Swift”,
+  "description": "An address book app for iOS Swift showing user registration, user login, and CRUD.",
+  "type": 0,
+  "is_active": true
+}

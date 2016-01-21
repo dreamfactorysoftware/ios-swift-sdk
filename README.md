@@ -34,7 +34,7 @@ To download and install DreamFactory, follow the instructions [here](http://wiki
     - Save changes.
 
 - Import the package file for the app.
-    - From the Apps tab in the admin console, click Import and click 'Address Book for iOS' in the list of sample apps. The Address Book package contains the application description, schemas, and sample data.
+    - From the Apps tab in the admin console, click Import and click 'Address Book for iOS Swift' in the list of sample apps. The Address Book package contains the application description, schemas, and sample data.
     - Leave storage service and folder blank. This is a native iOS app so it requires no file storage on the server.
     - Click the Import button. If successful, your app will appear on the Apps tab. You may have to refresh the page to see your new app in the list.
     
@@ -46,7 +46,7 @@ Almost there! Clone this repo to your local machine then open and run the projec
 
 Before running the project you need to edit API_KEY in the file Network/RESTEngine.swift to match the key for your new app. This key can be found by selecting your app from the list on the Apps tab in the admin console.
 
-The default admin console URL is localhost:8080. If your admin console is not at that path, you can change the default path in Network/RESTEngine.swift.
+The default instance URL is localhost:8080. If your instance is not at that path, you can change the default path in Network/RESTEngine.swift.
 
 When the app starts up you can register a new user, or log in as an existing user. Currently the app does not support registering and logging in admin users.
 

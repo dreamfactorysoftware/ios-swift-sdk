@@ -8,15 +8,17 @@
 
 import UIKit
 
-// change these values to match your instance
+let kAppVersion = "1.0.0"
+
+// change kApiKey and kBaseInstanceUrl to match your app and instance
+
 // API key for your app goes here, see apps tab in admin console
-private let kApiKey = "47f611bfd5da6bc33e01a473142ea048409adb970839c95fa32af28e4c002e79"
+private let kApiKey = "e917301b79a9da1e9dd90f0d8e1cf4aecb4a6295785167a80759aaacf1190ede"
 private let kSessionTokenKey = "SessionToken"
-private let kBaseInstanceUrl = "https://df-test-gm.enterprise.dreamfactory.com/api/v2"
+private let kBaseInstanceUrl = "http://localhost:8080/api/v2"
 private let kDbServiceName = "db/_table"
 private let kContainerName = "profile_images"
 
-let kAppVersion = "1.0.0"
 let kUserEmail = "UserEmail"
 let kPassword = "UserPassword"
 
