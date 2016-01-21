@@ -8,7 +8,7 @@
 
 import UIKit
 
-let kAppVersion = "1.0.0"
+let kAppVersion = "1.0.1"
 
 // change kApiKey and kBaseInstanceUrl to match your app and instance
 
