@@ -76,7 +76,7 @@ class ContactInfoView: UIView, UITextFieldDelegate {
     }
     
     func buildToDiciontary() -> [String: AnyObject] {
-        return ["id": record.id,
+        var json = [
                 "contact_id": record.contactId,
                 "info_type": record.type,
                 "phone": record.phone,
@@ -86,6 +86,10 @@ class ContactInfoView: UIView, UITextFieldDelegate {
                 "state": record.state,
                 "zip": record.zipCode,
                 "country": record.country]
+        if record.id != 0 {
+            json["id"] = record.id
+        }
+        return json
     }
     
     func updateFields() {
