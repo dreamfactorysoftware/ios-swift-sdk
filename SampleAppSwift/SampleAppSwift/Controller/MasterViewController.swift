@@ -31,7 +31,7 @@ class MasterViewController: UIViewController {
             passwordTextField.text = userPassword
         }
         
-        navBar.backButton.addTarget(self, action: "onBackButtonClick", forControlEvents: .TouchDown)
+        navBar.backButton.addTarget(self, action: #selector(onBackButtonClick), forControlEvents: .TouchDown)
     }
     
     func onBackButtonClick() {

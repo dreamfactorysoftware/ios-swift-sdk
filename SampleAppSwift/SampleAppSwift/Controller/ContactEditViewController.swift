@@ -67,19 +67,19 @@ class ContactEditViewController: UIViewController, ProfileImagePickerDelegate, U
         
         let navBar = self.navBar
         navBar.showDone()
-        navBar.doneButton.addTarget(self, action: "onDoneButtonClick", forControlEvents: .TouchDown)
+        navBar.doneButton.addTarget(self, action: #selector(onDoneButtonClick), forControlEvents: .TouchDown)
         navBar.enableAllTouch()
     }
     
     override func viewWillDisappear(animated: Bool) {
         super.viewWillDisappear(animated)
         
-        self.navBar.doneButton.removeTarget(self, action: "onDoneButtonClick", forControlEvents: .TouchDown)
+        self.navBar.doneButton.removeTarget(self, action: #selector(onDoneButtonClick), forControlEvents: .TouchDown)
     }
     
     private func registerForKeyboardNotifications() {
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "keyboardWasShown:", name: UIKeyboardDidShowNotification, object: nil)
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "keyboardWillBeHidden:", name: UIKeyboardWillHideNotification, object: nil)
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(keyboardWasShown(_:)), name: UIKeyboardDidShowNotification, object: nil)
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(keyboardWillBeHidden(_:)), name: UIKeyboardWillHideNotification, object: nil)
     }
     
     func keyboardWasShown(notification: NSNotification) {
@@ -234,7 +234,7 @@ class ContactEditViewController: UIViewController, ProfileImagePickerDelegate, U
     
     // build ui programmatically
     private func buildContactFields() {
-        buildContactTextFields("Contact Details", names: ["First Name", "Last Name", "Twitter", "Skype", "Notes"], y: 30)
+        buildContactTextFields("Contact Details", names: ["First Name", "Last Name", "Twitter", "Skype", "Notes"])
         
         // populate contact fields if editing
         if let contactRecord = contactRecord {
@@ -253,7 +253,7 @@ class ContactEditViewController: UIViewController, ProfileImagePickerDelegate, U
         changeImageButton.titleLabel?.font = UIFont(name: "Helvetica Neue", size: 20.0)
         changeImageButton.setTitleColor(UIColor(red: 107/255.0, green: 170/255.0, blue: 178/255.0, alpha: 1.0), forState: .Normal)
         
-        changeImageButton.addTarget(self, action: "onChangeImageClick", forControlEvents: .TouchUpInside)
+        changeImageButton.addTarget(self, action: #selector(onChangeImageClick), forControlEvents: .TouchUpInside)
         //contactEditScrollView.addSubview(changeImageButton)
         
         // add all the contact info views
@@ -283,14 +283,14 @@ class ContactEditViewController: UIViewController, ProfileImagePickerDelegate, U
         addButton.titleLabel?.font = UIFont(name: "Helvetica Neue", size: 20.0)
         addButton.setTitleColor(UIColor(red: 254/255.0, green: 254/255.0, blue: 254/255.0, alpha: 1.0), forState: .Normal)
         addButton.setTitle("Add new address", forState: .Normal)
-        addButton.addTarget(self, action: "onAddNewAddressClick", forControlEvents: .TouchUpInside)
+        addButton.addTarget(self, action: #selector(onAddNewAddressClick), forControlEvents: .TouchUpInside)
         
         contactEditScrollView.addSubview(addButton)
         addButtonRef = addButton
     }
     
-    private func buildContactTextFields(title: String, names: [String], var y: CGFloat) {
-        
+    private func buildContactTextFields(title: String, names: [String]) {
+        var y: CGFloat = 30
         for field in names {
             let textField = UITextField(frame: CGRectMake(view.frame.size.width * 0.05, y, view.frame.size.width*0.9, 35))
             textField.placeholder = field

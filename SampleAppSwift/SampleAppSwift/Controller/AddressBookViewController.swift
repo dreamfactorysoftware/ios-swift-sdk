@@ -25,7 +25,7 @@ class AddressBookViewController: UITableViewController {
         let navBar = self.navBar
         navBar.showAdd()
         navBar.showBackButton(true)
-        navBar.addButton.addTarget(self, action: "hitAddGroupButton", forControlEvents: .TouchDown)
+        navBar.addButton.addTarget(self, action: #selector(hitAddGroupButton), forControlEvents: .TouchDown)
         navBar.enableAllTouch()
         
         getAddressBookContentFromServer()
@@ -34,7 +34,7 @@ class AddressBookViewController: UITableViewController {
     override func viewWillDisappear(animated: Bool) {
         super.viewWillDisappear(animated)
         
-        self.navBar.addButton.removeTarget(self, action: "hitAddGroupButton", forControlEvents: .TouchDown)
+        self.navBar.addButton.removeTarget(self, action: #selector(hitAddGroupButton), forControlEvents: .TouchDown)
     }
     
     func hitAddGroupButton() {
