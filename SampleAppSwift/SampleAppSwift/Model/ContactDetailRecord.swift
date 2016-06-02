@@ -12,7 +12,7 @@ import UIKit
  Contact info model
  */
 class ContactDetailRecord {
-    var id: NSNumber!
+    var id: NSNumber = NSNumber(integer: 0)
     var type: String!
     var phone: String!
     var email: String!
