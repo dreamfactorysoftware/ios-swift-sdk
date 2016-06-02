@@ -12,10 +12,10 @@ let kAppVersion = "1.0.1"
 
 // change kApiKey and kBaseInstanceUrl to match your app and instance
 
-// API key for your app goes here, see apps tab in admin console
-private let kApiKey = "e917301b79a9da1e9dd90f0d8e1cf4aecb4a6295785167a80759aaacf1190ede"
-private let kSessionTokenKey = "SessionToken"
+// API key for your app goes here. See README.md or https://github.com/dreamfactorysoftware/ios-swift-sdk
+private let kApiKey = ""
 private let kBaseInstanceUrl = "http://localhost:8080/api/v2"
+private let kSessionTokenKey = "SessionToken"
 private let kDbServiceName = "db/_table"
 private let kContainerName = "profile_images"
 
@@ -104,7 +104,9 @@ final class RESTEngine {
     
     private init() {
     }
-    
+    func isConfigured() -> Bool {
+        return kApiKey != ""
+    }
     private func callApiWithPath(restApiPath: String, method: String, queryParams: [String: AnyObject]?, body: AnyObject?, headerParams: [String: String]?, success: SuccessClosure?, failure: ErrorClosure?) {
         api.restPath(restApiPath, method: method, queryParams: queryParams, body: body, headerParams: headerParams, contentType: "application/json", completionBlock: { (response, error) -> Void in
             if let error = error where failure != nil {
