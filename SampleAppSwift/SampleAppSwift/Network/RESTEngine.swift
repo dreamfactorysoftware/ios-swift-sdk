@@ -8,14 +8,14 @@
 
 import UIKit
 
-let kAppVersion = "1.0.1"
+let kAppVersion = "1.0.2"
 
 // change kApiKey and kBaseInstanceUrl to match your app and instance
 
-// API key for your app goes here, see apps tab in admin console
-private let kApiKey = "e917301b79a9da1e9dd90f0d8e1cf4aecb4a6295785167a80759aaacf1190ede"
-private let kSessionTokenKey = "SessionToken"
+// API key for your app goes here. See README.md or https://github.com/dreamfactorysoftware/ios-swift-sdk
+private let kApiKey = ""
 private let kBaseInstanceUrl = "http://localhost:8080/api/v2"
+private let kSessionTokenKey = "SessionToken"
 private let kDbServiceName = "db/_table"
 private let kContainerName = "profile_images"
 
@@ -104,7 +104,9 @@ final class RESTEngine {
     
     private init() {
     }
-    
+    func isConfigured() -> Bool {
+        return kApiKey != ""
+    }
     private func callApiWithPath(restApiPath: String, method: String, queryParams: [String: AnyObject]?, body: AnyObject?, headerParams: [String: String]?, success: SuccessClosure?, failure: ErrorClosure?) {
         api.restPath(restApiPath, method: method, queryParams: queryParams, body: body, headerParams: headerParams, contentType: "application/json", completionBlock: { (response, error) -> Void in
             if let error = error where failure != nil {
@@ -115,8 +117,19 @@ final class RESTEngine {
         })
     }
     
-    //MARK: - Authorization methods
+    // MARK: Helpers for POST/PUT/PATCH entity wrapping
+ 
+    private func toResourceArray(entity:JSON) -> JSON {
+        let jsonResource: JSON = ["resource" : [entity]] // DreamFactory REST API body with {"resource" = [ { record } ] }
+        return jsonResource
+    }
+    private func toResourceArray(jsonArray:JSONArray) -> JSON {
+        let jsonResource: JSON = ["resource" : jsonArray] // DreamFactory REST API body with {"resource" = [ { record } ] }
+        return jsonResource
+    }
     
+    //MARK: - Authorization methods
+
     /**
     Sign in user
     */
@@ -186,7 +199,7 @@ final class RESTEngine {
      Add new group with name and contacts
      */
     func addGroupToServerWithName(name: String, contactIds: [NSNumber]?, success: SuccessClosure, failure: ErrorClosure) {
-        let requestBody: [String: AnyObject] = ["name": name]
+        let requestBody = toResourceArray(["name": name])
         
         callApiWithPath(Routing.Service(tableName: "contact_group").path, method: "POST", queryParams: nil, body: requestBody, headerParams: sessionHeaderParams, success: { response in
             // get the id of the new group, then add the relations
@@ -244,7 +257,7 @@ final class RESTEngine {
         
         // update name
         let queryParams: [String: AnyObject] = ["ids": groupId.stringValue]
-        let requestBody: [String: AnyObject] = ["name": name]
+        let requestBody = toResourceArray(["name": name])
         
         callApiWithPath(Routing.Service(tableName: "contact_group").path, method: "PATCH", queryParams: queryParams, body: requestBody, headerParams: sessionHeaderParams, success: { _ in
             self.removeGroupContactRelationsForGroupWithId(groupId, contactIds: removedContactIds, success: { _ in
@@ -416,7 +429,7 @@ final class RESTEngine {
     func addContactToServerWithDetails(contactDetails: JSON, success: SuccessClosure, failure: ErrorClosure) {
         // need to create contact first, then can add contactInfo and group relationships
         
-        let requestBody: [String: AnyObject] = contactDetails
+        let requestBody = toResourceArray(contactDetails)
         
         callApiWithPath(Routing.Service(tableName: "contact").path, method: "POST", queryParams: nil, body: requestBody, headerParams: sessionHeaderParams, success: success, failure: failure)
     }
@@ -426,15 +439,14 @@ final class RESTEngine {
         // build request body
         // need to put in any extra field-key pair and avoid NSUrl timeout issue
         // otherwise it drops connection
-        let requestBody: [String: AnyObject] = ["contact_group_id": groupId,
-            "contact_id": contactId]
+        let requestBody = toResourceArray(["contact_group_id": groupId, "contact_id": contactId])
         
         callApiWithPath(Routing.Service(tableName: "contact_group_relationship").path, method: "POST", queryParams: nil, body: requestBody, headerParams: sessionHeaderParams, success: success, failure: failure)
     }
     
     func addContactInfoToServer(info: JSONArray, success: SuccessClosure, failure: ErrorClosure) {
         
-        let requestBody: [String: AnyObject] = ["resource": info]
+        let requestBody = toResourceArray(info)
         
         callApiWithPath(Routing.Service(tableName: "contact_info").path, method: "POST", queryParams: nil, body: requestBody, headerParams: sessionHeaderParams, success: success, failure: failure)
     }
@@ -467,7 +479,7 @@ final class RESTEngine {
         
         // set the id of the contact we are looking at
         let queryParams: [String: AnyObject] = ["ids": "\(contactId)"]
-        let requestBody: [String: AnyObject] = contactDetails
+        let requestBody = toResourceArray(contactDetails)
         
         callApiWithPath(Routing.Service(tableName: "contact").path, method: "PATCH", queryParams: queryParams, body: requestBody, headerParams: sessionHeaderParams, success: success, failure: failure)
     }
@@ -477,7 +489,7 @@ final class RESTEngine {
     */
     func updateContactInfo(info: JSONArray, success: SuccessClosure, failure: ErrorClosure) {
         
-        let requestBody: [String: AnyObject] = ["resource": info]
+        let requestBody = toResourceArray(info)
         
         callApiWithPath(Routing.Service(tableName: "contact_info").path, method: "PATCH", queryParams: nil, body: requestBody, headerParams: sessionHeaderParams, success: success, failure: failure)
     }

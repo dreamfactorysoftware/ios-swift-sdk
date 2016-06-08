@@ -64,8 +64,8 @@ class ContactListViewController: UITableViewController, UISearchBarDelegate {
         didPrefetch = false
         
         let navBar = self.navBar
-        navBar.addButton.addTarget(self, action: "onAddButtonClick", forControlEvents: .TouchDown)
-        navBar.editButton.addTarget(self, action: "onEditButtonClick", forControlEvents: .TouchDown)
+        navBar.addButton.addTarget(self, action: #selector(onAddButtonClick), forControlEvents: .TouchDown)
+        navBar.editButton.addTarget(self, action: #selector(onEditButtonClick), forControlEvents: .TouchDown)
         navBar.showEditAndAdd()
         navBar.enableAllTouch()
     }
@@ -74,8 +74,8 @@ class ContactListViewController: UITableViewController, UISearchBarDelegate {
         super.viewWillDisappear(animated)
         
         let navBar = self.navBar
-        navBar.addButton.removeTarget(self, action: "onAddButtonClick", forControlEvents: .TouchDown)
-        navBar.editButton.removeTarget(self, action: "onEditButtonClick", forControlEvents: .TouchDown)
+        navBar.addButton.removeTarget(self, action: #selector(onAddButtonClick), forControlEvents: .TouchDown)
+        navBar.editButton.removeTarget(self, action: #selector(onEditButtonClick), forControlEvents: .TouchDown)
         
         if !goingToShowContactViewController && contactViewController != nil {
             contactViewController!.cancelPrefetch()

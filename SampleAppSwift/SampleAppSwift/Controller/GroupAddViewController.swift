@@ -64,14 +64,14 @@ class GroupAddViewController: UIViewController, UITableViewDataSource, UITableVi
         
         let navBar = self.navBar
         navBar.showDone()
-        navBar.doneButton.addTarget(self, action: "onDoneButtonClick", forControlEvents: .TouchDown)
+        navBar.doneButton.addTarget(self, action: #selector(onDoneButtonClick), forControlEvents: .TouchDown)
         navBar.enableAllTouch()
     }
     
     override func viewWillDisappear(animated: Bool) {
         super.viewWillDisappear(animated)
         
-        self.navBar.doneButton.removeTarget(self, action: "onDoneButtonClick", forControlEvents: .TouchDown)
+        self.navBar.doneButton.removeTarget(self, action: #selector(onDoneButtonClick), forControlEvents: .TouchDown)
         navBar.disableAllTouch()
     }
     

@@ -50,14 +50,14 @@ class ContactViewController: UIViewController {
         
         let navBar = self.navBar
         navBar.showEdit()
-        navBar.editButton.addTarget(self, action: "onEditButtonClick", forControlEvents: .TouchDown)
+        navBar.editButton.addTarget(self, action: #selector(onEditButtonClick), forControlEvents: .TouchDown)
         navBar.enableAllTouch()
     }
     
     override func viewWillDisappear(animated: Bool) {
         super.viewWillDisappear(animated)
         
-        self.navBar.editButton.removeTarget(self, action: "onEditButtonClick", forControlEvents: .TouchDown)
+        self.navBar.editButton.removeTarget(self, action: #selector(onEditButtonClick), forControlEvents: .TouchDown)
     }
 
     func onEditButtonClick() {

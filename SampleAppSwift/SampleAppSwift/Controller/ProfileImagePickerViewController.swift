@@ -42,13 +42,13 @@ class ProfileImagePickerViewController: UIViewController, UITableViewDataSource,
         
         let navBar = self.navBar
         navBar.showDone()
-        self.navBar.doneButton.addTarget(self, action: "onDoneButtonClick", forControlEvents: .TouchDown)
+        self.navBar.doneButton.addTarget(self, action: #selector(onDoneButtonClick), forControlEvents: .TouchDown)
     }
     
     override func viewWillDisappear(animated: Bool) {
         super.viewWillDisappear(animated)
         
-        self.navBar.doneButton.removeTarget(self, action: "onDoneButtonClick", forControlEvents: .TouchDown)
+        self.navBar.doneButton.removeTarget(self, action: #selector(onDoneButtonClick), forControlEvents: .TouchDown)
     }
     
     @IBAction func onChooseImageClick() {

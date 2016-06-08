@@ -31,7 +31,7 @@ class MasterViewController: UIViewController {
             passwordTextField.text = userPassword
         }
         
-        navBar.backButton.addTarget(self, action: "onBackButtonClick", forControlEvents: .TouchDown)
+        navBar.backButton.addTarget(self, action: #selector(onBackButtonClick), forControlEvents: .TouchDown)
     }
     
     func onBackButtonClick() {
@@ -47,7 +47,12 @@ class MasterViewController: UIViewController {
         navBar.showEditButton(false)
         navBar.showDoneButton(false)
     }
-    
+    override func viewDidAppear(animated: Bool) {
+        if !RESTEngine.sharedEngine.isConfigured() {
+            Alert.showAlertWithMessage("RESTEngine is not configured.\n\nPlease see README.md.", fromViewController: self)
+        }
+    }
+
     @IBAction func onRegisterClick(sender: AnyObject) {
         showRegisterViewController()
     }

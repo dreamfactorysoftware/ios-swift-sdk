@@ -35,7 +35,7 @@ class ContactInfoView: UIView, UITextFieldDelegate {
         self.contactTypes = ["work", "home", "mobile", "other"]
         super.init(frame: frame)
         
-        buildContactTextFields(["Type", "Phone", "Email", "Address", "City", "State", "Zip", "Country"], y: 0)
+        buildContactTextFields(["Type", "Phone", "Email", "Address", "City", "State", "Zip", "Country"])
         
         //resize
         var contectRect = CGRectZero
@@ -76,7 +76,7 @@ class ContactInfoView: UIView, UITextFieldDelegate {
     }
     
     func buildToDiciontary() -> [String: AnyObject] {
-        return ["id": record.id,
+        var json = [
                 "contact_id": record.contactId,
                 "info_type": record.type,
                 "phone": record.phone,
@@ -86,6 +86,10 @@ class ContactInfoView: UIView, UITextFieldDelegate {
                 "state": record.state,
                 "zip": record.zipCode,
                 "country": record.country]
+        if record.id != 0 {
+            json["id"] = record.id
+        }
+        return json
     }
     
     func updateFields() {
@@ -114,8 +118,8 @@ class ContactInfoView: UIView, UITextFieldDelegate {
         }
     }
     
-    private func buildContactTextFields(names: [String], var y: CGFloat) {
-        y += 30
+    private func buildContactTextFields(names: [String]) {
+        var y: CGFloat = 0
         
         textFields = [:]
         
@@ -136,7 +140,7 @@ class ContactInfoView: UIView, UITextFieldDelegate {
                 button.frame = textField.frame
                 button.setTitle("", forState: .Normal)
                 button.backgroundColor = UIColor.clearColor()
-                button.addTarget(self, action: "onContactTypeClick", forControlEvents: .TouchDown)
+                button.addTarget(self, action: #selector(onContactTypeClick), forControlEvents: .TouchDown)
                 self.addSubview(button)
                 textField.text = contactTypes[0]
             }
