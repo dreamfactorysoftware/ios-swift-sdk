@@ -14,15 +14,15 @@ class CustomNavBar: UIToolbar {
     var editButton: UIButton!
     var doneButton: UIButton!
     
-    private var isShowEdit = false
-    private var isShowAdd = false
-    private var isShowDone = false
+    fileprivate var isShowEdit = false
+    fileprivate var isShowAdd = false
+    fileprivate var isShowDone = false
     
     override init(frame: CGRect) {
         super.init(frame: frame)
         self.backgroundColor = UIColor(red: 240/255.0, green: 240/255.0, blue: 240/255.0, alpha: 1.0)
-        self.opaque = true
-        self.setBackgroundImage(UIImage(named: "phone1"), forToolbarPosition: .Top, barMetrics: .Default)
+        self.isOpaque = true
+        self.setBackgroundImage(UIImage(named: "phone1"), forToolbarPosition: .top, barMetrics: .default)
     }
 
     required init?(coder aDecoder: NSCoder) {
@@ -31,48 +31,48 @@ class CustomNavBar: UIToolbar {
     
     func buildLogo() {
         let dfLogo = UIImage(named: "DreamFactory-logo-horiz-filled")!
-        let resizable = dfLogo.resizableImageWithCapInsets(UIEdgeInsetsZero, resizingMode: .Stretch)
+        let resizable = dfLogo.resizableImage(withCapInsets: UIEdgeInsets.zero, resizingMode: .stretch)
         let logoView = UIImageView(image: resizable)
-        logoView.frame = CGRectMake(0, 0, frame.size.width * 0.45, dfLogo.size.height * dfLogo.size.width / (frame.size.width * 0.5))
-        logoView.contentMode = .ScaleAspectFit
-        logoView.center = CGPointMake(frame.size.width * 0.48, frame.size.height * 0.6)
+        logoView.frame = CGRect(x: 0, y: 0, width: frame.size.width * 0.45, height: dfLogo.size.height * dfLogo.size.width / (frame.size.width * 0.5))
+        logoView.contentMode = .scaleAspectFit
+        logoView.center = CGPoint(x: frame.size.width * 0.48, y: frame.size.height * 0.6)
         addSubview(logoView)
     }
     
     func buildButtons() {
-        backButton = UIButton(type: .System)
-        backButton.frame = CGRectMake(frame.size.width * 0.1, 20, 50, 20)
-        backButton.setTitleColor(UIColor(red: 216/255.0, green: 122/255.0, blue: 39/255.0, alpha: 1.0), forState: .Normal)
+        backButton = UIButton(type: .system)
+        backButton.frame = CGRect(x: frame.size.width * 0.1, y: 20, width: 50, height: 20)
+        backButton.setTitleColor(UIColor(red: 216/255.0, green: 122/255.0, blue: 39/255.0, alpha: 1.0), for: UIControlState())
         backButton.titleLabel?.font = UIFont(name: "HelveticaNeue-Regular", size: 17.0)
-        backButton.setTitle("Back", forState: .Normal)
-        backButton.center = CGPointMake(frame.size.width * 0.1, 40)
+        backButton.setTitle("Back", for: UIControlState())
+        backButton.center = CGPoint(x: frame.size.width * 0.1, y: 40)
         addSubview(backButton)
         showBackButton(false)
         
-        addButton = UIButton(type: .System)
-        addButton.frame = CGRectMake(frame.size.width * 0.85, 20, 50, 40)
-        addButton.setTitleColor(UIColor(red: 107/255.0, green: 170/255.0, blue: 178/255.0, alpha: 1.0), forState: .Normal)
+        addButton = UIButton(type: .system)
+        addButton.frame = CGRect(x: frame.size.width * 0.85, y: 20, width: 50, height: 40)
+        addButton.setTitleColor(UIColor(red: 107/255.0, green: 170/255.0, blue: 178/255.0, alpha: 1.0), for: UIControlState())
         addButton.titleLabel?.font = UIFont(name: "Helvetica Neue", size: 30.0)
-        addButton.setTitle("+", forState: .Normal)
-        addButton.center = CGPointMake(frame.size.width * 0.82, 38)
+        addButton.setTitle("+", for: UIControlState())
+        addButton.center = CGPoint(x: frame.size.width * 0.82, y: 38)
         addSubview(addButton)
         showAddButton(false)
         
-        editButton = UIButton(type: .System)
-        editButton.frame = CGRectMake(frame.size.width * 0.8, 20, 50, 40)
-        editButton.setTitleColor(UIColor(red: 241/255.0, green: 141/255.0, blue: 42/255.0, alpha: 1.0), forState: .Normal)
+        editButton = UIButton(type: .system)
+        editButton.frame = CGRect(x: frame.size.width * 0.8, y: 20, width: 50, height: 40)
+        editButton.setTitleColor(UIColor(red: 241/255.0, green: 141/255.0, blue: 42/255.0, alpha: 1.0), for: UIControlState())
         editButton.titleLabel?.font = UIFont(name: "HelveticaNeue-Regular", size: 17.0)
-        editButton.setTitle("Edit", forState: .Normal)
-        editButton.center = CGPointMake(frame.size.width * 0.93, 40)
+        editButton.setTitle("Edit", for: UIControlState())
+        editButton.center = CGPoint(x: frame.size.width * 0.93, y: 40)
         addSubview(editButton)
         showEditButton(false)
         
-        doneButton = UIButton(type: .System)
-        doneButton.frame = CGRectMake(frame.size.width * 0.8, 20, 50, 40)
-        doneButton.setTitleColor(UIColor(red: 241/255.0, green: 141/255.0, blue: 42/255.0, alpha: 1.0), forState: .Normal)
+        doneButton = UIButton(type: .system)
+        doneButton.frame = CGRect(x: frame.size.width * 0.8, y: 20, width: 50, height: 40)
+        doneButton.setTitleColor(UIColor(red: 241/255.0, green: 141/255.0, blue: 42/255.0, alpha: 1.0), for: UIControlState())
         doneButton.titleLabel?.font = UIFont(name: "HelveticaNeue-Regular", size: 17.0)
-        doneButton.setTitle("Done", forState: .Normal)
-        doneButton.center = CGPointMake(frame.size.width * 0.93, 40)
+        doneButton.setTitle("Done", for: UIControlState())
+        doneButton.center = CGPoint(x: frame.size.width * 0.93, y: 40)
         addSubview(doneButton)
         showDoneButton(false)
     }
@@ -101,27 +101,27 @@ class CustomNavBar: UIToolbar {
         showEditButton(false)
     }
     
-    func showEditButton(show: Bool) {
-        editButton.hidden = !show
+    func showEditButton(_ show: Bool) {
+        editButton.isHidden = !show
     }
     
-    func showAddButton(show: Bool) {
-        addButton.hidden = !show
+    func showAddButton(_ show: Bool) {
+        addButton.isHidden = !show
     }
     
-    func showBackButton(show: Bool) {
-        backButton.hidden = !show
+    func showBackButton(_ show: Bool) {
+        backButton.isHidden = !show
     }
     
-    func showDoneButton(show: Bool) {
-        doneButton.hidden = !show
+    func showDoneButton(_ show: Bool) {
+        doneButton.isHidden = !show
     }
     
     func disableAllTouch() {
-        userInteractionEnabled = false
+        isUserInteractionEnabled = false
     }
     
     func enableAllTouch() {
-        userInteractionEnabled = true
+        isUserInteractionEnabled = true
     }
 }

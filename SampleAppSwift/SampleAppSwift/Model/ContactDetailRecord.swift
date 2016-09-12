@@ -12,16 +12,16 @@ import UIKit
  Contact info model
  */
 class ContactDetailRecord {
-    var id: NSNumber = NSNumber(integer: 0)
-    var type: String!
-    var phone: String!
-    var email: String!
-    var state: String!
-    var zipCode: String!
-    var country: String!
-    var city: String!
-    var address: String!
-    var contactId: NSNumber!
+    var id: NSNumber = -1
+    var type: String = ""
+    var phone: String = ""
+    var email: String = ""
+    var state: String = ""
+    var zipCode: String = ""
+    var country: String = ""
+    var city: String = ""
+    var address: String = ""
+    var contactId: NSNumber = -1
     
     init() {
     }

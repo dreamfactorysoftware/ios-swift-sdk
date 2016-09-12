@@ -7,6 +7,26 @@
 //
 
 import UIKit
+fileprivate func < <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
+  switch (lhs, rhs) {
+  case let (l?, r?):
+    return l < r
+  case (nil, _?):
+    return true
+  default:
+    return false
+  }
+}
+
+fileprivate func > <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
+  switch (lhs, rhs) {
+  case let (l?, r?):
+    return l > r
+  default:
+    return rhs < lhs
+  }
+}
+
 
 class GroupAddViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, UISearchBarDelegate, UITextFieldDelegate {
     @IBOutlet weak var groupAddTableView: UITableView!
@@ -18,25 +38,25 @@ class GroupAddViewController: UIViewController, UITableViewDataSource, UITableVi
     // record of the group being edited
     var groupRecord: GroupRecord?
     
-    private var searchBar: UISearchBar!
+    fileprivate var searchBar: UISearchBar!
     
     // if there is a search going on
-    private var isSearch = false
+    fileprivate var isSearch = false
     
     // holds contents of a search
-    private var displayContentArray: [ContactRecord]!
+    fileprivate var displayContentArray: [ContactRecord]!
     
     // array of contacts selected to be in the group
-    private var selectedRows: [NSNumber]!
+    fileprivate var selectedRows: [NSNumber]!
     
     // contacts broken into groups by first letter of last name
-    private var contactSectionsDictionary: [String: [ContactRecord]]!
+    fileprivate var contactSectionsDictionary: [String: [ContactRecord]]!
     
     // header letters
-    private var alphabetArray: [String]!
+    fileprivate var alphabetArray: [String]!
     
-    private var waitLock: NSCondition!
-    private var waitReady = false
+    fileprivate var waitLock: NSCondition!
+    fileprivate var waitReady = false
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -45,7 +65,7 @@ class GroupAddViewController: UIViewController, UITableViewDataSource, UITableVi
         groupNameTextField.setValue(UIColor(red: 180/255.0, green: 180/255.0, blue: 180/255.0, alpha: 1.0), forKeyPath: "_placeholderLabel.textColor")
         
         // set up the search bar programmatically
-        searchBar = UISearchBar(frame: CGRectMake(0, 118, view.frame.size.width, 44))
+        searchBar = UISearchBar(frame: CGRect(x: 0, y: 118, width: view.frame.size.width, height: 44))
         searchBar.delegate = self
         self.view.addSubview(searchBar)
         searchBar.setNeedsDisplay()
@@ -59,27 +79,27 @@ class GroupAddViewController: UIViewController, UITableViewDataSource, UITableVi
         self.automaticallyAdjustsScrollViewInsets = false
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
         let navBar = self.navBar
         navBar.showDone()
-        navBar.doneButton.addTarget(self, action: #selector(onDoneButtonClick), forControlEvents: .TouchDown)
+        navBar.doneButton.addTarget(self, action: #selector(onDoneButtonClick), for: .touchDown)
         navBar.enableAllTouch()
     }
     
-    override func viewWillDisappear(animated: Bool) {
+    override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         
-        self.navBar.doneButton.removeTarget(self, action: #selector(onDoneButtonClick), forControlEvents: .TouchDown)
+        self.navBar.doneButton.removeTarget(self, action: #selector(onDoneButtonClick), for: .touchDown)
         navBar.disableAllTouch()
     }
     
     func onDoneButtonClick() {
         if groupNameTextField.text?.characters.count == 0 {
-            let alert = UIAlertController(title: nil, message: "Please enter a group name", preferredStyle: .Alert)
-            alert.addAction(UIAlertAction(title: "OK", style: .Default, handler: nil))
-            presentViewController(alert, animated: true, completion: nil)
+            let alert = UIAlertController(title: nil, message: "Please enter a group name", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+            present(alert, animated: true, completion: nil)
             return
         }
         
@@ -104,7 +124,7 @@ class GroupAddViewController: UIViewController, UITableViewDataSource, UITableVi
         waitLock.lock()
         waitReady = false
         
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)) {
+        DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
             self.getContactListFromServer()
             if self.groupRecord != nil {
                 // if we are editing a group, get any existing group members
@@ -115,7 +135,7 @@ class GroupAddViewController: UIViewController, UITableViewDataSource, UITableVi
     }
     
     func waitToReady() {
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)) {
+        DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
             self.waitLock.lock()
             while !self.waitReady {
                 self.waitLock.wait()
@@ -126,14 +146,14 @@ class GroupAddViewController: UIViewController, UITableViewDataSource, UITableVi
     
     //MARK: - Text field delegate
     
-    func textFieldShouldReturn(textField: UITextField) -> Bool {
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         textField.resignFirstResponder()
         return true
     }
     
     //MARK: - Search bar delegate
     
-    func searchBar(searchBar: UISearchBar, textDidChange searchText: String) {
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
         displayContentArray.removeAll()
         
         if searchText.isEmpty {
@@ -143,15 +163,15 @@ class GroupAddViewController: UIViewController, UITableViewDataSource, UITableVi
             return
         }
         isSearch = true
-        let firstLetter = searchText.substringToIndex(searchText.startIndex.advancedBy(1)).uppercaseString
+        let firstLetter = searchText.substring(to: searchText.index(searchText.startIndex, offsetBy: 1)).uppercased()
         let arrayAtLetter = contactSectionsDictionary[firstLetter]
         if let arrayAtLetter = arrayAtLetter {
             for record in arrayAtLetter {
                 if record.lastName.characters.count < searchText.characters.count {
                     continue
                 }
-                let lastNameSubstring = record.lastName.substringToIndex(record.lastName.startIndex.advancedBy(searchText.characters.count))
-                if lastNameSubstring.caseInsensitiveCompare(searchText) == .OrderedSame {
+                let lastNameSubstring = record.lastName.substring(to: record.lastName.index(record.lastName.startIndex, offsetBy: searchText.characters.count))
+                if lastNameSubstring.caseInsensitiveCompare(searchText) == .orderedSame {
                     displayContentArray.append(record)
                 }
             }
@@ -159,24 +179,24 @@ class GroupAddViewController: UIViewController, UITableViewDataSource, UITableVi
         }
     }
     
-    func searchBarSearchButtonClicked(searchBar: UISearchBar) {
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         searchBar.resignFirstResponder()
     }
     
-    func searchBarCancelButtonClicked(searchBar: UISearchBar) {
+    func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
         searchBar.resignFirstResponder()
     }
     
     //MARK: - Table view data source
     
-    func numberOfSectionsInTableView(tableView: UITableView) -> Int {
+    func numberOfSections(in tableView: UITableView) -> Int {
         if isSearch {
             return 1
         }
         return alphabetArray.count
     }
     
-    func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         if isSearch {
             return displayContentArray.count
         }
@@ -184,24 +204,24 @@ class GroupAddViewController: UIViewController, UITableViewDataSource, UITableVi
         return sectionContacts.count
     }
     
-    func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCellWithIdentifier("addGroupContactTableViewCell", forIndexPath: indexPath)
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "addGroupContactTableViewCell", for: indexPath)
         
         var record: ContactRecord!
         if isSearch {
-            record = displayContentArray[indexPath.row]
+            record = displayContentArray[(indexPath as NSIndexPath).row]
         } else {
-            let sectionContacts = contactSectionsDictionary[alphabetArray[indexPath.section]]!
-            record = sectionContacts[indexPath.row]
+            let sectionContacts = contactSectionsDictionary[alphabetArray[(indexPath as NSIndexPath).section]]!
+            record = sectionContacts[(indexPath as NSIndexPath).row]
         }
         
         cell.textLabel?.text = record.fullName
         
         // if the contact is selected to be in the group, mark it
         if selectedRows.contains(record.id) {
-            cell.accessoryType = .Checkmark
+            cell.accessoryType = .checkmark
         } else {
-            cell.accessoryType = .None
+            cell.accessoryType = .none
         }
         
         return cell
@@ -209,45 +229,46 @@ class GroupAddViewController: UIViewController, UITableViewDataSource, UITableVi
     
     //MARK: - Table view delegate
     
-    func tableView(tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
+    func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
         if isSearch {
-            let searchText = searchBar.text
-            if searchText?.characters.count > 0 {
-                return searchText!.substringToIndex(searchText!.startIndex.advancedBy(1)).uppercaseString
+            if let searchText = searchBar.text {
+                if searchText.characters.count > 0 {
+                    return searchText.substring(to: searchText.characters.index(searchText.startIndex, offsetBy: 1)).uppercased()
+                }
             }
         }
         return alphabetArray[section]
     }
     
-    func tableView(tableView: UITableView, willDisplayHeaderView view: UIView, forSection section: Int) {
+    func tableView(_ tableView: UITableView, willDisplayHeaderView view: UIView, forSection section: Int) {
         view.tintColor = UIColor(red: 210/255.0, green: 225/255.0, blue: 239/255.0, alpha: 1.0)
     }
     
-    func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
-        let cell = tableView.cellForRowAtIndexPath(indexPath)!
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let cell = tableView.cellForRow(at: indexPath)!
         var contact: ContactRecord!
         
         if isSearch {
-            contact = displayContentArray[indexPath.row]
+            contact = displayContentArray[(indexPath as NSIndexPath).row]
         } else {
-            let sectionContacts = contactSectionsDictionary[alphabetArray[indexPath.section]]!
-            contact = sectionContacts[indexPath.row]
+            let sectionContacts = contactSectionsDictionary[alphabetArray[(indexPath as NSIndexPath).section]]!
+            contact = sectionContacts[(indexPath as NSIndexPath).row]
         }
         
-        if cell.accessoryType == .None {
-            cell.accessoryType = .Checkmark
+        if cell.accessoryType == .none {
+            cell.accessoryType = .checkmark
             selectedRows.append(contact.id)
         } else {
-            cell.accessoryType = .None
+            cell.accessoryType = .none
             selectedRows.removeObject(contact.id)
         }
         
-        tableView.deselectRowAtIndexPath(indexPath, animated: true)
+        tableView.deselectRow(at: indexPath, animated: true)
     }
     
     // MARK: - Private methods
     
-    private func buildUpdateRequest() {
+    fileprivate func buildUpdateRequest() {
         // if a contact is selected and was already in the group, do nothing
         // if a contact is selected and was not in the group, add it to the group
         // if a contact is not selected and was in the group, remove it from the group
@@ -256,9 +277,9 @@ class GroupAddViewController: UIViewController, UITableViewDataSource, UITableVi
         var toRemove: [NSNumber] = []
         for contactId in selectedRows {
             for i in 0..<contactsAlreadyInGroupContentsArray.count {
-                if contactId.isEqualToNumber(contactsAlreadyInGroupContentsArray[i]) {
+                if contactId.isEqual(to: contactsAlreadyInGroupContentsArray[i]) {
                     toRemove.append(contactId)
-                    self.contactsAlreadyInGroupContentsArray!.removeAtIndex(i)
+                    self.contactsAlreadyInGroupContentsArray!.remove(at: i)
                     break
                 }
             }
@@ -273,7 +294,7 @@ class GroupAddViewController: UIViewController, UITableViewDataSource, UITableVi
         updateGroupWithServer()
     }
     
-    private func getContactListFromServer() {
+    fileprivate func getContactListFromServer() {
         
         RESTEngine.sharedEngine.getContactListFromServerWithSuccess({ response in
             // put the contact ids into an array
@@ -285,7 +306,7 @@ class GroupAddViewController: UIViewController, UITableViewDataSource, UITableVi
                     var found = false
                     for key in self.contactSectionsDictionary.keys {
                         // want to group by last name regardless of case
-                        if key.caseInsensitiveCompare(newRecord.lastName.substringToIndex(newRecord.lastName.startIndex.advancedBy(1))) == .OrderedSame {
+                        if key.caseInsensitiveCompare(newRecord.lastName.substring(to: newRecord.lastName.index(newRecord.lastName.startIndex, offsetBy: 1))) == .orderedSame {
                             var section = self.contactSectionsDictionary[key]!
                             section.append(newRecord)
                             self.contactSectionsDictionary[key] = section
@@ -296,7 +317,7 @@ class GroupAddViewController: UIViewController, UITableViewDataSource, UITableVi
                     
                     if !found {
                         // contact doesn't fit in any of the other buckets, make a new one
-                        let key = newRecord.lastName.substringToIndex(newRecord.lastName.startIndex.advancedBy(1))
+                        let key = newRecord.lastName.substring(to: newRecord.lastName.index(newRecord.lastName.startIndex, offsetBy: 1))
                         self.contactSectionsDictionary[key] = [newRecord]
                     }
                 }
@@ -306,18 +327,18 @@ class GroupAddViewController: UIViewController, UITableViewDataSource, UITableVi
             // sort the sections alphabetically by last name, first name
             for key in self.contactSectionsDictionary.keys {
                 let unsorted = self.contactSectionsDictionary[key]!
-                let sorted = unsorted.sort({ (one, two) -> Bool in
-                    if one.lastName.caseInsensitiveCompare(two.lastName) == .OrderedSame {
-                        return one.firstName.compare(two.firstName) == NSComparisonResult.OrderedAscending
+                let sorted = unsorted.sorted(by: { (one, two) -> Bool in
+                    if one.lastName.caseInsensitiveCompare(two.lastName) == .orderedSame {
+                        return one.firstName.compare(two.firstName) == ComparisonResult.orderedAscending
                     }
-                    return one.lastName.compare(two.lastName) == NSComparisonResult.OrderedAscending
+                    return one.lastName.compare(two.lastName) == ComparisonResult.orderedAscending
                 })
                 tmp[key] = sorted
             }
             self.contactSectionsDictionary = tmp
-            self.alphabetArray = Array(self.contactSectionsDictionary.keys).sort()
+            self.alphabetArray = Array(self.contactSectionsDictionary.keys).sorted()
             
-            dispatch_async(dispatch_get_main_queue()) {
+            DispatchQueue.main.async {
                 self.waitReady = true
                 self.waitLock.signal()
                 self.waitLock.unlock()
@@ -327,45 +348,45 @@ class GroupAddViewController: UIViewController, UITableViewDataSource, UITableVi
             
             }, failure: { error in
                 NSLog("Error getting all the contacts data: \(error)")
-                dispatch_async(dispatch_get_main_queue()) {
+                DispatchQueue.main.async {
                     Alert.showAlertWithMessage(error.errorMessage, fromViewController: self)
-                    self.navigationController?.popToRootViewControllerAnimated(true)
+                    _ = self.navigationController?.popToRootViewController(animated: true)
                 }
         })
     }
     
-    private func addNewGroupToServer() {
+    fileprivate func addNewGroupToServer() {
         RESTEngine.sharedEngine.addGroupToServerWithName(groupNameTextField.text!, contactIds: selectedRows, success: {_ in
-            dispatch_async(dispatch_get_main_queue()) {
+            DispatchQueue.main.async {
                 // go to previous screen
-                self.navigationController?.popViewControllerAnimated(true)
+                _ = self.navigationController?.popViewController(animated: true)
             }
             }, failure: { error in
                 NSLog("Error adding group to server: \(error)")
-                dispatch_async(dispatch_get_main_queue()) {
+                DispatchQueue.main.async {
                     Alert.showAlertWithMessage(error.errorMessage, fromViewController: self)
-                    self.navigationController?.popToRootViewControllerAnimated(true)
+                    _ = self.navigationController?.popToRootViewController(animated: true)
                 }
         })
     }
     
-    private func updateGroupWithServer() {
+    fileprivate func updateGroupWithServer() {
         RESTEngine.sharedEngine.updateGroupWithId(groupRecord!.id, name: groupNameTextField.text!, oldName: groupRecord!.name, removedContactIds: contactsAlreadyInGroupContentsArray, addedContactIds: selectedRows, success: { _ in
             
             self.groupRecord!.name = self.groupNameTextField.text!
-            dispatch_async(dispatch_get_main_queue()) {
-                self.navigationController?.popViewControllerAnimated(true)
+            DispatchQueue.main.async {
+                _ = self.navigationController?.popViewController(animated: true)
             }
             }, failure: { error in
                 NSLog("Error updating contact info with server: \(error)")
-                dispatch_async(dispatch_get_main_queue()) {
+                DispatchQueue.main.async {
                     Alert.showAlertWithMessage(error.errorMessage, fromViewController: self)
-                    self.navigationController?.popToRootViewControllerAnimated(true)
+                    _ = self.navigationController?.popToRootViewController(animated: true)
                 }
         })
     }
     
-    private func getContactGroupRelationListFromServer() {
+    fileprivate func getContactGroupRelationListFromServer() {
         RESTEngine.sharedEngine.getContactGroupRelationListFromServerWithGroupId(groupRecord!.id, success: { response in
             
             self.contactsAlreadyInGroupContentsArray.removeAll()
@@ -375,15 +396,15 @@ class GroupAddViewController: UIViewController, UITableViewDataSource, UITableVi
                 self.contactsAlreadyInGroupContentsArray.append(contactId)
                 self.selectedRows.append(contactId)
             }
-            dispatch_async(dispatch_get_main_queue()) {
+            DispatchQueue.main.async {
                 self.groupAddTableView.reloadData()
             }
             
             }, failure: { error in
                 NSLog("Error getting contact group relations list: \(error)")
-                dispatch_async(dispatch_get_main_queue()) {
+                DispatchQueue.main.async {
                     Alert.showAlertWithMessage(error.errorMessage, fromViewController: self)
-                    self.navigationController?.popToRootViewControllerAnimated(true)
+                    _ = self.navigationController?.popToRootViewController(animated: true)
                 }
         })
     }
@@ -391,9 +412,9 @@ class GroupAddViewController: UIViewController, UITableViewDataSource, UITableVi
 
 // helper extension to remove objects from array
 extension Array where Element: Equatable {
-    mutating func removeObject(object: Element) {
-        if let index = self.indexOf(object) {
-            self.removeAtIndex(index)
+    mutating func removeObject(_ object: Element) {
+        if let index = self.index(of: object) {
+            self.remove(at: index)
         }
     }
 }

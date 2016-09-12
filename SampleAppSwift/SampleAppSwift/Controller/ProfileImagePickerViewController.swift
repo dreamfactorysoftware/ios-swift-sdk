@@ -9,8 +9,8 @@
 import UIKit
 
 protocol ProfileImagePickerDelegate: class {
-    func didSelectItem(item: String)
-    func didSelectItem(item: String, withImage image: UIImage)
+    func didSelectItem(_ item: String)
+    func didSelectItem(_ item: String, withImage image: UIImage)
 }
 
 class ProfileImagePickerViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
@@ -37,25 +37,25 @@ class ProfileImagePickerViewController: UIViewController, UITableViewDataSource,
         tableView.contentInset = UIEdgeInsetsMake(-70, 0, -20, 0)
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
         let navBar = self.navBar
         navBar.showDone()
-        self.navBar.doneButton.addTarget(self, action: #selector(onDoneButtonClick), forControlEvents: .TouchDown)
+        self.navBar.doneButton.addTarget(self, action: #selector(onDoneButtonClick), for: .touchDown)
     }
     
-    override func viewWillDisappear(animated: Bool) {
+    override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         
-        self.navBar.doneButton.removeTarget(self, action: #selector(onDoneButtonClick), forControlEvents: .TouchDown)
+        self.navBar.doneButton.removeTarget(self, action: #selector(onDoneButtonClick), for: .touchDown)
     }
     
     @IBAction func onChooseImageClick() {
         let imagePicker = UIImagePickerController()
-        imagePicker.sourceType = .PhotoLibrary
+        imagePicker.sourceType = .photoLibrary
         imagePicker.delegate = self
-        presentViewController(imagePicker, animated: true, completion: nil)
+        present(imagePicker, animated: true, completion: nil)
     }
     
     func onDoneButtonClick() {
@@ -70,42 +70,42 @@ class ProfileImagePickerViewController: UIViewController, UITableViewDataSource,
             }
             delegate?.didSelectItem(imageName, withImage: imageToUpload)
         } else {
-            self.navigationController?.popViewControllerAnimated(true)
+            _ = self.navigationController?.popViewController(animated: true)
         }
     }
     
     //MARK: - Image picker delegate
     
-    func imagePickerController(picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : AnyObject]) {
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : Any]) {
         let image = info[UIImagePickerControllerOriginalImage] as! UIImage
         imageToUpload = image
         
-        dismissViewControllerAnimated(true, completion: nil)
+        dismiss(animated: true, completion: nil)
     }
     
     //MARK: - Tableview data source
     
-    func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return imageListContentArray.count
     }
     
-    func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCellWithIdentifier("profileImageTableViewCell", forIndexPath: indexPath)
-        cell.textLabel?.text = imageListContentArray[indexPath.row]
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "profileImageTableViewCell", for: indexPath)
+        cell.textLabel?.text = imageListContentArray[(indexPath as NSIndexPath).row]
         
         return cell
     }
     
     //MARK: - Tableview delegate
     
-    func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
-        let toPass = imageListContentArray[indexPath.row]
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let toPass = imageListContentArray[(indexPath as NSIndexPath).row]
         delegate?.didSelectItem(toPass)
     }
     
     //MARK: - Private methods
     
-    private func getImageListFromServer() {
+    fileprivate func getImageListFromServer() {
         
         RESTEngine.sharedEngine.getImageListFromServerWithContactId(record.id, success: { response in
             self.imageListContentArray.removeAll()
@@ -115,25 +115,25 @@ class ProfileImagePickerViewController: UIViewController, UITableViewDataSource,
                     self.imageListContentArray.append(record)
                 }
             }
-            dispatch_async(dispatch_get_main_queue()) {
+            DispatchQueue.main.async {
                 self.tableView.reloadData()
             }
             
             }, failure: { error in
                 // check if the error is file not found
                 if error.code == 404 {
-                    let decode = error.userInfo["error"]?.firstItem as? JSON
+                    let decode = (error.userInfo["error"] as AnyObject).firstItem as? JSON
                     let message = decode?["message"] as? String
-                    if message != nil && message!.containsString("does not exist in storage") {
+                    if message != nil && message!.contains("does not exist in storage") {
                         NSLog("Warning: Error getting profile image list data from server: \(message)")
                         return
                     }
                 }
                 // else report normally
                 NSLog("Error getting profile image list data from server: \(error)")
-                dispatch_async(dispatch_get_main_queue()) {
+                DispatchQueue.main.async {
                     Alert.showAlertWithMessage(error.errorMessage, fromViewController: self)
-                    self.navigationController?.popToRootViewControllerAnimated(true)
+                    _ = self.navigationController?.popToRootViewController(animated: true)
                 }
         })
     }

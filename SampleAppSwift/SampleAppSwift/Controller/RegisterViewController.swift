@@ -7,6 +7,26 @@
 //
 
 import UIKit
+fileprivate func < <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
+  switch (lhs, rhs) {
+  case let (l?, r?):
+    return l < r
+  case (nil, _?):
+    return true
+  default:
+    return false
+  }
+}
+
+fileprivate func > <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
+  switch (lhs, rhs) {
+  case let (l?, r?):
+    return l > r
+  default:
+    return rhs < lhs
+  }
+}
+
 
 class RegisterViewController: UIViewController {
     
@@ -20,7 +40,7 @@ class RegisterViewController: UIViewController {
         passwordTextField.setValue(UIColor(red: 180/255.0, green: 180/255.0, blue: 180/255.0, alpha: 1.0), forKeyPath: "_placeholderLabel.textColor")
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
         let navBar = self.navBar
@@ -29,35 +49,35 @@ class RegisterViewController: UIViewController {
         navBar.showEditButton(false)
     }
     
-    @IBAction func onSubmitClick(sender: AnyObject) {
+    @IBAction func onSubmitClick(_ sender: AnyObject) {
         self.view.endEditing(true)
         if emailTextField.text?.characters.count > 0 && passwordTextField.text?.characters.count > 0 {
             
             RESTEngine.sharedEngine.registerWithEmail(emailTextField.text!, password: passwordTextField.text!, success: { response in
                 RESTEngine.sharedEngine.sessionToken = response!["session_token"] as? String
-                let defaults = NSUserDefaults.standardUserDefaults()
+                let defaults = UserDefaults.standard
                 defaults.setValue(self.emailTextField.text!, forKey: kUserEmail)
                 defaults.setValue(self.passwordTextField.text!, forKey: kPassword)
                 defaults.synchronize()
                 
-                dispatch_async(dispatch_get_main_queue()) {
+                DispatchQueue.main.async {
                     self.showAddressBookViewController()
                 }
                 }, failure: { error in
                     NSLog("Error registering new user: \(error)")
-                    dispatch_async(dispatch_get_main_queue()) {
+                    DispatchQueue.main.async {
                         Alert.showAlertWithMessage(error.errorMessage, fromViewController: self)
                     }
             })
         } else {
-            let alert = UIAlertController(title: nil, message: "Enter email and password", preferredStyle: .Alert)
-            alert.addAction(UIAlertAction(title: "OK", style: .Default, handler: nil))
-            presentViewController(alert, animated: true, completion: nil)
+            let alert = UIAlertController(title: nil, message: "Enter email and password", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+            present(alert, animated: true, completion: nil)
         }
     }
     
-    private func showAddressBookViewController() {
-        let addressBookViewController = self.storyboard?.instantiateViewControllerWithIdentifier("AddressBookViewController")
+    fileprivate func showAddressBookViewController() {
+        let addressBookViewController = self.storyboard?.instantiateViewController(withIdentifier: "AddressBookViewController")
         self.navigationController?.pushViewController(addressBookViewController!, animated: true)
     }
 }

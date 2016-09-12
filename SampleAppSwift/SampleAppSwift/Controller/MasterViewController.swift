@@ -7,6 +7,26 @@
 //
 
 import UIKit
+fileprivate func < <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
+  switch (lhs, rhs) {
+  case let (l?, r?):
+    return l < r
+  case (nil, _?):
+    return true
+  default:
+    return false
+  }
+}
+
+fileprivate func > <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
+  switch (lhs, rhs) {
+  case let (l?, r?):
+    return l > r
+  default:
+    return rhs < lhs
+  }
+}
+
 
 class MasterViewController: UIViewController {
     
@@ -20,8 +40,8 @@ class MasterViewController: UIViewController {
         versionLabel.text = "Version \(kAppVersion)"
         
         // check if login credentials are already stored
-        let userEmail = NSUserDefaults.standardUserDefaults().valueForKey(kUserEmail) as? String
-        let userPassword = NSUserDefaults.standardUserDefaults().valueForKey(kPassword) as? String
+        let userEmail = UserDefaults.standard.value(forKey: kUserEmail) as? String
+        let userPassword = UserDefaults.standard.value(forKey: kPassword) as? String
         
         emailTextField.setValue(UIColor(red: 180/255.0, green: 180/255.0, blue: 180/255.0, alpha: 1.0), forKeyPath: "_placeholderLabel.textColor")
         passwordTextField.setValue(UIColor(red: 180/255.0, green: 180/255.0, blue: 180/255.0, alpha: 1.0), forKeyPath: "_placeholderLabel.textColor")
@@ -31,14 +51,14 @@ class MasterViewController: UIViewController {
             passwordTextField.text = userPassword
         }
         
-        navBar.backButton.addTarget(self, action: #selector(onBackButtonClick), forControlEvents: .TouchDown)
+        navBar.backButton.addTarget(self, action: #selector(onBackButtonClick), for: .touchDown)
     }
     
     func onBackButtonClick() {
-        self.navigationController?.popViewControllerAnimated(true)
+        _ = self.navigationController?.popViewController(animated: true)
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
         let navBar = self.navBar
@@ -47,17 +67,17 @@ class MasterViewController: UIViewController {
         navBar.showEditButton(false)
         navBar.showDoneButton(false)
     }
-    override func viewDidAppear(animated: Bool) {
+    override func viewDidAppear(_ animated: Bool) {
         if !RESTEngine.sharedEngine.isConfigured() {
             Alert.showAlertWithMessage("RESTEngine is not configured.\n\nPlease see README.md.", fromViewController: self)
         }
     }
 
-    @IBAction func onRegisterClick(sender: AnyObject) {
+    @IBAction func onRegisterClick(_ sender: AnyObject) {
         showRegisterViewController()
     }
     
-    @IBAction func onSignInClick(sender: AnyObject) {
+    @IBAction func onSignInClick(_ sender: AnyObject) {
         self.view.endEditing(true)
         
         //log in using the generic API
@@ -66,16 +86,16 @@ class MasterViewController: UIViewController {
             RESTEngine.sharedEngine.loginWithEmail(emailTextField.text!, password: passwordTextField.text!,
                 success: { response in
                     RESTEngine.sharedEngine.sessionToken = response!["session_token"] as? String
-                    let defaults = NSUserDefaults.standardUserDefaults()
+                    let defaults = UserDefaults.standard
                     defaults.setValue(self.emailTextField.text!, forKey: kUserEmail)
                     defaults.setValue(self.passwordTextField.text!, forKey: kPassword)
                     defaults.synchronize()
-                    dispatch_async(dispatch_get_main_queue()) {
+                    DispatchQueue.main.async {
                         self.showAddressBookViewController()
                     }
                 }, failure: { error in
                     NSLog("Error logging in user: \(error)")
-                    dispatch_async(dispatch_get_main_queue()) {
+                    DispatchQueue.main.async {
                         Alert.showAlertWithMessage(error.errorMessage, fromViewController: self)
                     }
                 })
@@ -84,13 +104,13 @@ class MasterViewController: UIViewController {
         }
     }
     
-    private func showAddressBookViewController() {
-        let addressBookViewController = self.storyboard?.instantiateViewControllerWithIdentifier("AddressBookViewController")
+    fileprivate func showAddressBookViewController() {
+        let addressBookViewController = self.storyboard?.instantiateViewController(withIdentifier: "AddressBookViewController")
         self.navigationController?.pushViewController(addressBookViewController!, animated: true)
     }
     
-    private func showRegisterViewController() {
-        let registerViewController = self.storyboard?.instantiateViewControllerWithIdentifier("RegisterViewController")
+    fileprivate func showRegisterViewController() {
+        let registerViewController = self.storyboard?.instantiateViewController(withIdentifier: "RegisterViewController")
         self.navigationController?.pushViewController(registerViewController!, animated: true)
     }
 }
