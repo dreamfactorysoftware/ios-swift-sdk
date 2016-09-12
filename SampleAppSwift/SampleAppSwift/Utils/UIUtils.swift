@@ -10,7 +10,7 @@ import UIKit
 
 class Alert {
     
-    static func showAlertWithMessage(message: String, fromViewController vc: UIViewController) {
+    static func showAlertWithMessage(_ message: String, fromViewController vc: UIViewController) {
         let alert = UIAlertView(title: nil, message: message, delegate: nil, cancelButtonTitle: "OK")
         alert.show()
     }

@@ -10,32 +10,32 @@ import UIKit
 
 final class NIKApiInvoker {
 
-    let queue = NSOperationQueue()
-    let cachePolicy = NSURLRequestCachePolicy.UseProtocolCachePolicy
+    let queue = OperationQueue()
+    let cachePolicy = NSURLRequest.CachePolicy.useProtocolCachePolicy
     
     /**
      get the shared singleton
     */
     static let sharedInstance = NIKApiInvoker()
     static var __LoadingObjectsCount = 0
-    private init() {
+    fileprivate init() {
     }
     
-    private func updateLoadCountWithDelta(countDelta: Int) {
+    fileprivate func updateLoadCountWithDelta(_ countDelta: Int) {
         objc_sync_enter(self)
         NIKApiInvoker.__LoadingObjectsCount += countDelta
         NIKApiInvoker.__LoadingObjectsCount = max(0, NIKApiInvoker.__LoadingObjectsCount)
         
-        UIApplication.sharedApplication().networkActivityIndicatorVisible = NIKApiInvoker.__LoadingObjectsCount > 0
+        UIApplication.shared.isNetworkActivityIndicatorVisible = NIKApiInvoker.__LoadingObjectsCount > 0
         
         objc_sync_exit(self)
     }
     
-    private func startLoad() {
+    fileprivate func startLoad() {
         updateLoadCountWithDelta(1)
     }
     
-    private func stopLoad() {
+    fileprivate func stopLoad() {
         updateLoadCountWithDelta(-1)
     }
     
@@ -51,7 +51,7 @@ final class NIKApiInvoker {
      - Parameter contentType: json or xml
      - Parameter completionBlock: block to be executed once call is done
     */
-    func restPath(path: String, method: String, queryParams: [String: AnyObject]?, body: AnyObject?, headerParams: [String: String]?, contentType: String?, completionBlock: ([String: AnyObject]?, NSError?) -> Void) {
+    func restPath(_ path: String, method: String, queryParams: [String: AnyObject]?, body: AnyObject?, headerParams: [String: String]?, contentType: String?, completionBlock: @escaping ([String: AnyObject]?, NSError?) -> Void) {
         let request = NIKRequestBuilder.restPath(path, method: method, queryParams: queryParams, body: body, headerParams: headerParams, contentType: contentType)
         
         /*******************************************************************
@@ -66,45 +66,45 @@ final class NIKApiInvoker {
         
         // Handle caching on GET requests
 
-        if (cachePolicy == .ReturnCacheDataElseLoad || cachePolicy == .ReturnCacheDataDontLoad) && method == "GET" {
-            let cacheResponse = NSURLCache.sharedURLCache().cachedResponseForRequest(request)
+        if (cachePolicy == .returnCacheDataElseLoad || cachePolicy == .returnCacheDataDontLoad) && method == "GET" {
+            let cacheResponse = URLCache.shared.cachedResponse(for: request)
             let data = cacheResponse?.data
             if let data = data {
-                let results = try? NSJSONSerialization.JSONObjectWithData(data, options: []) as? [String: AnyObject]
+                let results = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: AnyObject]
                 completionBlock(results!, nil)
             }
         }
         
-        if cachePolicy == .ReturnCacheDataDontLoad {
+        if cachePolicy == .returnCacheDataDontLoad {
             return
         }
         startLoad() // for network activity indicator
         
-        let date = NSDate()
+        let date = Date()
         NSURLConnection.sendAsynchronousRequest(request, queue: queue) {(response, response_data, response_error) -> Void in
             self.stopLoad()
             if let response_error = response_error {
                 if let response_data = response_data {
-                    let results = try? NSJSONSerialization.JSONObjectWithData(response_data, options: [])
+                    let results = try? JSONSerialization.jsonObject(with: response_data, options: [])
                     if let results = results as? [String: AnyObject] {
-                        completionBlock(nil, NSError(domain: response_error.domain, code: response_error.code, userInfo: results))
+                        completionBlock(nil, NSError(domain: response_error._domain, code: response_error._code, userInfo: results))
                     } else {
-                        completionBlock(nil, response_error)
+                        completionBlock(nil, response_error as NSError?)
                     }
                 } else {
-                    completionBlock(nil, response_error)
+                    completionBlock(nil, response_error as NSError?)
                 }
                 return
             } else {
-                let statusCode = (response as! NSHTTPURLResponse).statusCode
+                let statusCode = (response as! HTTPURLResponse).statusCode
                 if !NSLocationInRange(statusCode, NSMakeRange(200, 99)) {
-                    let response_error = NSError(domain: "swagger", code: statusCode, userInfo: try! NSJSONSerialization.JSONObjectWithData(response_data!, options: []) as? [NSObject: AnyObject])
+                    let response_error = NSError(domain: "swagger", code: statusCode, userInfo: try! JSONSerialization.jsonObject(with: response_data!, options: []) as? [AnyHashable: Any])
                     completionBlock(nil, response_error)
                     return
                 } else {
-                    let results = try! NSJSONSerialization.JSONObjectWithData(response_data!, options: []) as! [String: AnyObject]
-                    if NSUserDefaults.standardUserDefaults().boolForKey("RVBLogging") {
-                        NSLog("fetched results (\(NSDate().timeIntervalSinceDate(date)) seconds): \(results)")
+                    let results = try! JSONSerialization.jsonObject(with: response_data!, options: []) as! [String: AnyObject]
+                    if UserDefaults.standard.bool(forKey: "RVBLogging") {
+                        NSLog("fetched results (\(Date().timeIntervalSince(date)) seconds): \(results)")
                     }
                     completionBlock(results, nil)
                 }
@@ -128,7 +128,7 @@ final class NIKRequestBuilder {
      - Parameter headerParams: user should pass in the app api key and a session token
      - Parameter contentType: json or xml
      */
-    static func restPath(path: String, method: String, queryParams: [String: AnyObject]?, body: AnyObject?, headerParams: [String: String]?, contentType: String?) -> NSURLRequest {
+    static func restPath(_ path: String, method: String, queryParams: [String: AnyObject]?, body: AnyObject?, headerParams: [String: String]?, contentType: String?) -> URLRequest {
         let request = NSMutableURLRequest()
         var requestUrl = path
         if let queryParams = queryParams {
@@ -138,12 +138,12 @@ final class NIKRequestBuilder {
             requestUrl = "\(path)?\(parameterString)"
         }
         
-        if NSUserDefaults.standardUserDefaults().boolForKey("RVBLogging") {
+        if UserDefaults.standard.bool(forKey: "RVBLogging") {
             NSLog("request url: \(requestUrl)")
         }
         
-        let URL = NSURL(string: requestUrl)!
-        request.URL = URL
+        let URL = Foundation.URL(string: requestUrl)!
+        request.url = URL
         // The cache settings get set by the ApiInvoker
         request.timeoutInterval = 30
         
@@ -153,24 +153,25 @@ final class NIKRequestBuilder {
             }
         }
         
-        request.HTTPMethod = method
+        request.httpMethod = method
         if let body = body {
             // build the body into JSON
-            var data: NSData!
+            var data: Data!
             if body is [String: AnyObject] || body is [AnyObject] {
-                data = try? NSJSONSerialization.dataWithJSONObject(body, options: [])
+                data = try? JSONSerialization.data(withJSONObject: body, options: [])
             } else if let body = body as? NIKFile {
-                data = body.data
+                data = body.data as Data!
             } else {
-                data = body.dataUsingEncoding(NSUTF8StringEncoding)
+                //data = body.data(using: String.Encoding.utf8) What is this object type?
+                data = "".data(using: String.Encoding.utf8)
             }
-            let postLength = "\(data.length)"
+            let postLength = "\(data.count)"
             request.setValue(postLength, forHTTPHeaderField: "Content-Length")
-            request.HTTPBody = data
+            request.httpBody = data
             request.setValue(contentType, forHTTPHeaderField: "Content-Type")
         }
         
-        return request
+        return request as URLRequest
     }
 }
 
@@ -181,10 +182,10 @@ extension String {
     */
     
     func stringByAddingPercentEncodingForURLQueryValue() -> String? {
-        let characterSet = NSMutableCharacterSet.alphanumericCharacterSet()
-        characterSet.addCharactersInString("-._~")
+        let characterSet = NSMutableCharacterSet.alphanumeric()
+        characterSet.addCharacters(in: "-._~")
         
-        return self.stringByAddingPercentEncodingWithAllowedCharacters(characterSet)
+        return self.addingPercentEncoding(withAllowedCharacters: characterSet as CharacterSet)
     }
 }
 
@@ -202,6 +203,6 @@ extension Dictionary {
             return "\(percentEscapedKey)=\(percentEscapedValue)"
         }
         
-        return parameterArray.joinWithSeparator("&")
+        return parameterArray.joined(separator: "&")
     }
 }

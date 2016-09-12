@@ -16,9 +16,9 @@ import UIKit
 class NIKFile {
     let name: String
     let mimeType: String
-    let data: NSData
+    let data: Data
     
-    init(name: String, mimeType: String, data: NSData) {
+    init(name: String, mimeType: String, data: Data) {
         self.name = name
         self.mimeType = mimeType
         self.data = data

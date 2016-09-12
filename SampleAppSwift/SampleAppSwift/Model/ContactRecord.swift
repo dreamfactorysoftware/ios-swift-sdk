@@ -10,9 +10,13 @@ import UIKit
 
 extension Dictionary {
     
-    func nonNull(key: Key) -> String {
+    func nonNull(_ key: Key) -> String {
         let value = self[key]
-        if value is NSNull {
+        
+        if let sValue = value as? String {
+            return sValue
+        }
+        else if value is NSNull {
             return ""
         } else {
             return value as! String
@@ -24,20 +28,19 @@ extension Dictionary {
  Contact model
  */
 class ContactRecord: Equatable {
-    var id: NSNumber!
-    var firstName: String!
-    var lastName: String!
-    var notes: String!
-    var skype: String!
-    var twitter: String!
-    var imageURL: String!
+    var id: NSNumber = 0
+    var firstName: String = ""
+    var lastName: String = ""
+    var notes: String = ""
+    var skype: String = ""
+    var twitter: String = ""
+    var imageURL: String = ""
     
     var fullName: String {
         return "\(firstName) \(lastName)"
     }
     
     init() {
-        
     }
     
     init(json: JSON) {
@@ -61,5 +64,5 @@ class ContactRecord: Equatable {
 }
 
 func ==(lhs: ContactRecord, rhs: ContactRecord) -> Bool {
-    return lhs.id.isEqualToNumber(rhs.id)
+    return lhs.id.isEqual(to: rhs.id)
 }

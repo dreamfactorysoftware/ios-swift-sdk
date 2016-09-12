@@ -19,22 +19,22 @@ class AddressBookViewController: UITableViewController {
         super.viewDidLoad()
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
         let navBar = self.navBar
         navBar.showAdd()
         navBar.showBackButton(true)
-        navBar.addButton.addTarget(self, action: #selector(hitAddGroupButton), forControlEvents: .TouchDown)
+        navBar.addButton.addTarget(self, action: #selector(hitAddGroupButton), for: .touchDown)
         navBar.enableAllTouch()
         
         getAddressBookContentFromServer()
     }
     
-    override func viewWillDisappear(animated: Bool) {
+    override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         
-        self.navBar.addButton.removeTarget(self, action: #selector(hitAddGroupButton), forControlEvents: .TouchDown)
+        self.navBar.addButton.removeTarget(self, action: #selector(hitAddGroupButton), for: .touchDown)
     }
     
     func hitAddGroupButton() {
@@ -43,14 +43,14 @@ class AddressBookViewController: UITableViewController {
     
     //MARK: - Table view data source
     
-    override func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return addressBookContentArray.count
     }
     
-    override func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCellWithIdentifier("addressBookTableViewCell", forIndexPath: indexPath)
+    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "addressBookTableViewCell", for: indexPath)
         
-        let record = addressBookContentArray[indexPath.row]
+        let record = addressBookContentArray[(indexPath as NSIndexPath).row]
         cell.textLabel?.text = record.name
         
         return cell
@@ -58,41 +58,41 @@ class AddressBookViewController: UITableViewController {
     
     //MARK: - Table view delegate
     
-    override func tableView(tableView: UITableView, canEditRowAtIndexPath indexPath: NSIndexPath) -> Bool {
+    override func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
         // allow swipe to delete
         return true
     }
     
-    override func tableView(tableView: UITableView, commitEditingStyle editingStyle: UITableViewCellEditingStyle, forRowAtIndexPath indexPath: NSIndexPath) {
-        if editingStyle == .Delete {
-            let record = addressBookContentArray[indexPath.row]
+    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
+        if editingStyle == .delete {
+            let record = addressBookContentArray[(indexPath as NSIndexPath).row]
             
             // can not delete group until all references to it are removed
             // remove relations -> remove group
             // pass record ID so it knows what group we are removing
             removeGroupFromServer(record.id)
             
-            addressBookContentArray.removeAtIndex(indexPath.row)
-            tableView.deleteRowsAtIndexPaths([indexPath], withRowAnimation: .Automatic)
+            addressBookContentArray.remove(at: (indexPath as NSIndexPath).row)
+            tableView.deleteRows(at: [indexPath], with: .automatic)
         }
     }
     
-    override func tableView(tableView: UITableView, didHighlightRowAtIndexPath indexPath: NSIndexPath) {
-        let record = addressBookContentArray[indexPath.row]
+    override func tableView(_ tableView: UITableView, didHighlightRowAt indexPath: IndexPath) {
+        let record = addressBookContentArray[(indexPath as NSIndexPath).row]
         
-        contactListViewController = self.storyboard?.instantiateViewControllerWithIdentifier("ContactListViewController") as! ContactListViewController
+        contactListViewController = self.storyboard?.instantiateViewController(withIdentifier: "ContactListViewController") as! ContactListViewController
         contactListViewController.groupRecord = record
         contactListViewController.prefetch()
     }
     
-    override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
-        tableView.deselectRowAtIndexPath(indexPath, animated: true)
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: true)
         showContactListViewController()
     }
     
     //MARK: - Private functions
     
-    private func getAddressBookContentFromServer() {
+    fileprivate func getAddressBookContentFromServer() {
         // get all the groups
         RESTEngine.sharedEngine.getAddressBookContentFromServerWithSuccess({ response in
             self.addressBookContentArray.removeAll()
@@ -101,46 +101,46 @@ class AddressBookViewController: UITableViewController {
                 let newRecord = GroupRecord(json: recordInfo)
                 self.addressBookContentArray.append(newRecord)
             }
-            dispatch_async(dispatch_get_main_queue()) {
+            DispatchQueue.main.async {
                 self.tableView.reloadData()
             }
             }, failure: { error in
                 NSLog("Error getting address book data: \(error)")
-                dispatch_async(dispatch_get_main_queue()) {
+                DispatchQueue.main.async {
                     Alert.showAlertWithMessage(error.errorMessage, fromViewController: self)
-                    self.navigationController?.popToRootViewControllerAnimated(true)
+                    _ = self.navigationController?.popToRootViewController(animated: true)
                 }
         })
     }
     
-    private func removeGroupFromServer(groupId: NSNumber) {
+    fileprivate func removeGroupFromServer(_ groupId: NSNumber) {
         RESTEngine.sharedEngine.removeGroupFromServerWithGroupId(groupId, success: nil, failure: { error in
             NSLog("Error deleting group: \(error)")
-            dispatch_async(dispatch_get_main_queue()) {
+            DispatchQueue.main.async {
                 Alert.showAlertWithMessage(error.errorMessage, fromViewController: self)
-                self.navigationController?.popToRootViewControllerAnimated(true)
+                _ = self.navigationController?.popToRootViewController(animated: true)
             }
         })
     }
     
-    private func showContactListViewController() {
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)) {
+    fileprivate func showContactListViewController() {
+        DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
             // already fetching so just wait until the data gets back
             self.contactListViewController.waitToReady()
-            dispatch_async(dispatch_get_main_queue()) {
+            DispatchQueue.main.async {
                 self.navigationController?.pushViewController(self.contactListViewController, animated: true)
             }
         }
     }
     
-    private func showGroupAddViewController() {
-        let groupAddViewController = self.storyboard?.instantiateViewControllerWithIdentifier("GroupAddViewController") as! GroupAddViewController
+    fileprivate func showGroupAddViewController() {
+        let groupAddViewController = self.storyboard?.instantiateViewController(withIdentifier: "GroupAddViewController") as! GroupAddViewController
         // tell the viewController we are creating a new group
         groupAddViewController.prefetch()
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)) {
+        DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
             // already fetching so just wait until the data gets back
             groupAddViewController.waitToReady()
-            dispatch_async(dispatch_get_main_queue()) {
+            DispatchQueue.main.async {
                 self.navigationController?.pushViewController(groupAddViewController, animated: true)
             }
         }

@@ -15,31 +15,31 @@ class ContactViewController: UIViewController {
     var contactRecord: ContactRecord!
 
     // holds contact info records
-    private var contactDetails: [ContactDetailRecord]!
+    fileprivate var contactDetails: [ContactDetailRecord]!
     
-    private var contactGroups: [String]!
+    fileprivate var contactGroups: [String]!
     
-    private var queue: dispatch_queue_t!
+    fileprivate var queue: DispatchQueue!
     
-    private var groupLock: NSCondition!
-    private var groupReady = false
+    fileprivate var groupLock: NSCondition!
+    fileprivate var groupReady = false
     
-    private var viewLock: NSCondition!
-    private var viewReady = false
+    fileprivate var viewLock: NSCondition!
+    fileprivate var viewReady = false
     
-    private var waitLock: NSCondition!
-    private var waitReady = false
+    fileprivate var waitLock: NSCondition!
+    fileprivate var waitReady = false
     
-    private var canceled = false
+    fileprivate var canceled = false
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        contactDetailScrollView.frame = CGRectMake(0, 0, view.frame.size.width, view.frame.size.height)
+        contactDetailScrollView.frame = CGRect(x: 0, y: 0, width: view.frame.size.width, height: view.frame.size.height)
         contactDetailScrollView.backgroundColor = UIColor(red: 254/255.0, green: 254/255.0, blue: 254/255.0, alpha: 1.0)
     }
 
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         if !viewReady {
             // only unlock the view if it is locked
@@ -50,18 +50,18 @@ class ContactViewController: UIViewController {
         
         let navBar = self.navBar
         navBar.showEdit()
-        navBar.editButton.addTarget(self, action: #selector(onEditButtonClick), forControlEvents: .TouchDown)
+        navBar.editButton.addTarget(self, action: #selector(onEditButtonClick), for: .touchDown)
         navBar.enableAllTouch()
     }
     
-    override func viewWillDisappear(animated: Bool) {
+    override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         
-        self.navBar.editButton.removeTarget(self, action: #selector(onEditButtonClick), forControlEvents: .TouchDown)
+        self.navBar.editButton.removeTarget(self, action: #selector(onEditButtonClick), for: .touchDown)
     }
 
     func onEditButtonClick() {
-        let contactEditViewController = self.storyboard?.instantiateViewControllerWithIdentifier("ContactEditViewController") as! ContactEditViewController
+        let contactEditViewController = self.storyboard?.instantiateViewController(withIdentifier: "ContactEditViewController") as! ContactEditViewController
         // tell the contact list what group it is looking at
         contactEditViewController.contactRecord = contactRecord
         contactEditViewController.contactViewController = self
@@ -83,24 +83,24 @@ class ContactViewController: UIViewController {
         viewReady = false
         canceled = false
         
-        dispatch_async(dispatch_get_main_queue()) {
+        DispatchQueue.main.async {
             self.waitLock.lock()
             self.groupLock.lock()
             self.viewLock.lock()
         }
         
-        queue = dispatch_queue_create("contactViewQueue", nil)
-        dispatch_async(queue) {[weak self] in
+        queue = DispatchQueue(label: "contactViewQueue", attributes: [])
+        queue.async {[weak self] in
             if let strongSelf = self {
                 strongSelf.getContactInfoFromServerForRecord(strongSelf.contactRecord)
             }
         }
-        dispatch_async(queue) {[weak self] in
+        queue.async {[weak self] in
             if let strongSelf = self {
                 strongSelf.getContactsListFromServerWithRelation()
             }
         }
-        dispatch_async(queue) {[weak self] in
+        queue.async {[weak self] in
             if let strongSelf = self {
                 strongSelf.buildContactView()
             }
@@ -109,7 +109,7 @@ class ContactViewController: UIViewController {
     
     func cancelPrefetch() {
         canceled = true
-        dispatch_async(dispatch_get_main_queue()) {
+        DispatchQueue.main.async {
             self.viewReady = true
             self.viewLock.signal()
             self.viewLock.unlock()
@@ -128,12 +128,12 @@ class ContactViewController: UIViewController {
     // MARK: - Private methods
     
     // build the address boxes
-    private func buildAddressViewForRecord(record: ContactDetailRecord, y: CGFloat, buffer: CGFloat) -> UIView {
+    fileprivate func buildAddressViewForRecord(_ record: ContactDetailRecord, y: CGFloat, buffer: CGFloat) -> UIView {
         
-        let subView = UIView(frame: CGRectMake(0, y + buffer, view.frame.size.width, 20))
+        let subView = UIView(frame: CGRect(x: 0, y: y + buffer, width: view.frame.size.width, height: 20))
         subView.translatesAutoresizingMaskIntoConstraints = false
         
-        let typeLabel = UILabel(frame: CGRectMake(25, 10, subView.frame.size.width - 25, 30))
+        let typeLabel = UILabel(frame: CGRect(x: 25, y: 10, width: subView.frame.size.width - 25, height: 30))
         typeLabel.text = record.type
         typeLabel.font = UIFont(name: "HelveticaNeue-Light", size: 23.0)
         typeLabel.textColor = UIColor(red: 253/255.0, green: 253/255.0, blue: 250/255.0, alpha: 1.0)
@@ -141,37 +141,37 @@ class ContactViewController: UIViewController {
         
         var next_y: CGFloat = 40 // track where the lowest item is
         if !record.email.isEmpty {
-            let label = UILabel(frame: CGRectMake(50, 40, subView.frame.size.width - 50, 30))
+            let label = UILabel(frame: CGRect(x: 50, y: 40, width: subView.frame.size.width - 50, height: 30))
             label.text = record.email
             label.font = UIFont(name: "HelveticaNeue-Light", size: 20.0)
             label.textColor = UIColor(red: 249/255.0, green: 249/255.0, blue: 249/255.0, alpha: 1.0)
             subView.addSubview(label)
             
-            let imageView = UIImageView(frame: CGRectMake(25, 45, 20, 20))
+            let imageView = UIImageView(frame: CGRect(x: 25, y: 45, width: 20, height: 20))
             imageView.image = UIImage(named: "mail")
-            imageView.contentMode = .ScaleAspectFit
+            imageView.contentMode = .scaleAspectFit
             subView.addSubview(imageView)
             
             next_y += 60
         }
         
         if !record.phone.isEmpty {
-            let label = UILabel(frame: CGRectMake(50, next_y, subView.frame.size.width - 50, 20))
+            let label = UILabel(frame: CGRect(x: 50, y: next_y, width: subView.frame.size.width - 50, height: 20))
             label.text = record.phone
             label.font = UIFont(name: "HelveticaNeue-Light", size: 20.0)
             label.textColor = UIColor(red: 253/255.0, green: 253/255.0, blue: 250/255.0, alpha: 1.0)
             subView.addSubview(label)
             
-            let imageView = UIImageView(frame: CGRectMake(25, next_y, 20, 20))
+            let imageView = UIImageView(frame: CGRect(x: 25, y: next_y, width: 20, height: 20))
             imageView.image = UIImage(named: "phone1")
-            imageView.contentMode = .ScaleAspectFit
+            imageView.contentMode = .scaleAspectFit
             subView.addSubview(imageView)
             
             next_y += 60
         }
         
         if !record.address.isEmpty && !record.city.isEmpty && !record.state.isEmpty && !record.zipCode.isEmpty {
-            let label = UILabel(frame: CGRectMake(50, next_y, subView.frame.size.width - 50, 20))
+            let label = UILabel(frame: CGRect(x: 50, y: next_y, width: subView.frame.size.width - 50, height: 20))
             label.font = UIFont(name: "HelveticaNeue-Light", size: 19.0)
             label.numberOfLines = 0
             label.textColor = UIColor(red: 250/255.0, green: 250/255.0, blue: 250/255.0, alpha: 1.0)
@@ -184,9 +184,9 @@ class ContactViewController: UIViewController {
             label.sizeToFit()
             subView.addSubview(label)
             
-            let imageView = UIImageView(frame: CGRectMake(25, next_y, 20, 20))
+            let imageView = UIImageView(frame: CGRect(x: 25, y: next_y, width: 20, height: 20))
             imageView.image = UIImage(named: "home")
-            imageView.contentMode = .ScaleAspectFit
+            imageView.contentMode = .scaleAspectFit
             subView.addSubview(imageView)
             
             next_y += label.frame.size.height
@@ -202,17 +202,17 @@ class ContactViewController: UIViewController {
         return subView
     }
     
-    private func makeListOfGroupsContactBelongsTo() -> UIView {
-        let subView = UIView(frame: CGRectMake(0, 0, view.frame.size.width, 20))
+    fileprivate func makeListOfGroupsContactBelongsTo() -> UIView {
+        let subView = UIView(frame: CGRect(x: 0, y: 0, width: view.frame.size.width, height: 20))
         
-        let typeLabel = UILabel(frame: CGRectMake(0, 10, subView.frame.size.width - 25, 30))
+        let typeLabel = UILabel(frame: CGRect(x: 0, y: 10, width: subView.frame.size.width - 25, height: 30))
         typeLabel.text = "Groups:"
         typeLabel.font = UIFont(name: "HelveticaNeue-Light", size: 23.0)
         subView.addSubview(typeLabel)
         
         var y: CGFloat = 50
         for groupName in contactGroups {
-            let label = UILabel(frame: CGRectMake(25, y, subView.frame.size.width - 75, 30))
+            let label = UILabel(frame: CGRect(x: 25, y: y, width: subView.frame.size.width - 75, height: 30))
             label.text = groupName
             label.font = UIFont(name: "HelveticaNeue-Light", size: 20.0)
             
@@ -231,9 +231,9 @@ class ContactViewController: UIViewController {
         return subView
     }
     
-    private func buildContactView() {
+    fileprivate func buildContactView() {
         // clear out the view
-        dispatch_sync(dispatch_get_main_queue()) {
+        DispatchQueue.main.sync {
             if let contactDetailScrollView = self.contactDetailScrollView {
                 for view in contactDetailScrollView.subviews {
                     view.removeFromSuperview()
@@ -242,7 +242,7 @@ class ContactViewController: UIViewController {
         }
         
         // get the profile image
-        let profileImageView = UIImageView(frame: CGRectMake(0, 0, view.frame.size.width * 0.6, view.frame.size.width * 0.5))
+        let profileImageView = UIImageView(frame: CGRect(x: 0, y: 0, width: view.frame.size.width * 0.6, height: view.frame.size.width * 0.5))
         getProfileImageFromServerToImageView(profileImageView)
         
         viewLock.lock()
@@ -257,54 +257,54 @@ class ContactViewController: UIViewController {
         
         // track the y of the furthest item down in the view
         var y: CGFloat = 0
-        dispatch_sync(dispatch_get_main_queue()) {
-            profileImageView.center = CGPointMake(self.view.frame.size.width * 0.5, profileImageView.frame.size.height * 0.5)
+        DispatchQueue.main.sync {
+            profileImageView.center = CGPoint(x: self.view.frame.size.width * 0.5, y: profileImageView.frame.size.height * 0.5)
             y = profileImageView.frame.size.height + 5.0
             
             // add the name label
-            let nameLabel = UILabel(frame: CGRectMake(0, y, self.view.frame.size.width, 35))
+            let nameLabel = UILabel(frame: CGRect(x: 0, y: y, width: self.view.frame.size.width, height: 35))
             nameLabel.text = self.contactRecord.fullName
             nameLabel.font = UIFont(name: "HelveticaNeue-Light", size: 25.0)
-            nameLabel.textAlignment = .Center
+            nameLabel.textAlignment = .center
             self.contactDetailScrollView.addSubview(nameLabel)
             y += 40
             
             if !self.contactRecord.twitter.isEmpty {
-                let label = UILabel(frame: CGRectMake(40, y, self.view.frame.size.width - 40, 20))
+                let label = UILabel(frame: CGRect(x: 40, y: y, width: self.view.frame.size.width - 40, height: 20))
                 label.font = UIFont(name: "Helvetica Neue", size: 17.0)
                 label.text = self.contactRecord.twitter
                 self.contactDetailScrollView.addSubview(label)
                 
-                let imageView = UIImageView(frame: CGRectMake(10, y, 20, 20))
+                let imageView = UIImageView(frame: CGRect(x: 10, y: y, width: 20, height: 20))
                 imageView.image = UIImage(named: "twitter2")
-                imageView.contentMode = .ScaleAspectFit
+                imageView.contentMode = .scaleAspectFit
                 self.contactDetailScrollView.addSubview(imageView)
                 
                 y += 30
             }
             
             if !self.contactRecord.skype.isEmpty {
-                let label = UILabel(frame: CGRectMake(40, y, self.view.frame.size.width - 40, 20))
+                let label = UILabel(frame: CGRect(x: 40, y: y, width: self.view.frame.size.width - 40, height: 20))
                 label.font = UIFont(name: "Helvetica Neue", size: 17.0)
                 label.text = self.contactRecord.skype
                 self.contactDetailScrollView.addSubview(label)
                 
-                let imageView = UIImageView(frame: CGRectMake(10, y, 20, 20))
+                let imageView = UIImageView(frame: CGRect(x: 10, y: y, width: 20, height: 20))
                 imageView.image = UIImage(named: "skype")
-                imageView.contentMode = .ScaleAspectFit
+                imageView.contentMode = .scaleAspectFit
                 self.contactDetailScrollView.addSubview(imageView)
                 
                 y += 30
             }
             
             if !self.contactRecord.notes.isEmpty {
-                let label = UILabel(frame: CGRectMake(10, y, 80, 25))
+                let label = UILabel(frame: CGRect(x: 10, y: y, width: 80, height: 25))
                 label.font = UIFont(name: "HelveticaNeue-Light", size: 19.0)
                 label.text = "Notes"
                 self.contactDetailScrollView.addSubview(label)
                 y += 20
                 
-                let notesLabel = UILabel(frame: CGRectMake(self.view.frame.size.width * 0.05, y, self.view.frame.size.width * 0.9, 80))
+                let notesLabel = UILabel(frame: CGRect(x: self.view.frame.size.width * 0.05, y: y, width: self.view.frame.size.width * 0.9, height: 80))
                 notesLabel.autoresizesSubviews = false
                 notesLabel.font = UIFont(name: "Helvetica Neue", size: 16.0)
                 notesLabel.numberOfLines = 0
@@ -331,7 +331,7 @@ class ContactViewController: UIViewController {
         }
         groupLock.unlock()
         
-        dispatch_sync(dispatch_get_main_queue()) {
+        DispatchQueue.main.sync {
             let toAdd = self.makeListOfGroupsContactBelongsTo()
             var frame = toAdd.frame
             frame.origin.y = y + 20
@@ -340,16 +340,16 @@ class ContactViewController: UIViewController {
             self.contactDetailScrollView.addSubview(toAdd)
             
             // resize the scroll view content
-            var contectRect = CGRectZero
+            var contectRect = CGRect.zero
             for view in self.contactDetailScrollView.subviews {
-                contectRect = CGRectUnion(contectRect, view.frame)
+                contectRect = contectRect.union(view.frame)
             }
-            self.contactDetailScrollView.contentSize = CGSizeMake(self.contactDetailScrollView.frame.size.width, contectRect.size.height)
+            self.contactDetailScrollView.contentSize = CGSize(width: self.contactDetailScrollView.frame.size.width, height: contectRect.size.height)
             self.contactDetailScrollView.reloadInputViews()
         }
     }
     
-    private func getContactInfoFromServerForRecord(record: ContactRecord) {
+    fileprivate func getContactInfoFromServerForRecord(_ record: ContactRecord) {
         RESTEngine.sharedEngine.getContactInfoFromServerWithContactId(record.id, success: { response in
             // put the contact ids into an array
             var array: [ContactDetailRecord] = []
@@ -370,7 +370,7 @@ class ContactViewController: UIViewController {
             }
             
             self.contactDetails = array
-            dispatch_async(dispatch_get_main_queue()) {
+            DispatchQueue.main.async {
                 self.waitReady = true
                 self.waitLock.signal()
                 self.waitLock.unlock()
@@ -378,56 +378,56 @@ class ContactViewController: UIViewController {
             
             }, failure: { error in
                 NSLog("Error getting contact info: \(error)")
-                dispatch_async(dispatch_get_main_queue()) {
+                DispatchQueue.main.async {
                     Alert.showAlertWithMessage(error.errorMessage, fromViewController: self)
-                    self.navigationController?.popToRootViewControllerAnimated(true)
+                    _ = self.navigationController?.popToRootViewController(animated: true)
                 }
         })
     }
     
-    private func getProfileImageFromServerToImageView(imageView: UIImageView) {
-        if contactRecord.imageURL == nil || contactRecord.imageURL.isEmpty {
-            dispatch_async(dispatch_get_main_queue()) {
+    fileprivate func getProfileImageFromServerToImageView(_ imageView: UIImageView) {
+        if contactRecord.imageURL.isEmpty {
+            DispatchQueue.main.async {
                 imageView.image = UIImage(named: "default_portrait")
-                imageView.contentMode = .ScaleAspectFit
+                imageView.contentMode = .scaleAspectFit
                 self.contactDetailScrollView.addSubview(imageView)
             }
             return
         }
         
         RESTEngine.sharedEngine.getProfileImageFromServerWithContactId(contactRecord.id, fileName: contactRecord.imageURL, success: { response in
-            dispatch_async(dispatch_get_main_queue()) {
+            DispatchQueue.main.async {
                 var image: UIImage!
                 guard let content = response?["content"] as? String,
-                    let fileData = NSData(base64EncodedString: content, options: [NSDataBase64DecodingOptions.IgnoreUnknownCharacters])
+                    let fileData = Data(base64Encoded: content, options: [NSData.Base64DecodingOptions.ignoreUnknownCharacters])
                     else {
                         NSLog("\nWARN: Could not load image off of server, loading default\n");
                         image = UIImage(named: "default_portrait")
                         imageView.image = image
-                        imageView.contentMode = .ScaleAspectFit
+                        imageView.contentMode = .scaleAspectFit
                         self.contactDetailScrollView.addSubview(imageView)
                         return
                 }
                 
                 image = UIImage(data: fileData)
                 imageView.image = image
-                imageView.contentMode = .ScaleAspectFit
+                imageView.contentMode = .scaleAspectFit
                 self.contactDetailScrollView.addSubview(imageView)
             }
 
             }, failure: { error in
                 NSLog("Error getting profile image data from server: \(error)")
-                dispatch_async(dispatch_get_main_queue()) {
+                DispatchQueue.main.async {
                     NSLog("\nWARN: Could not load image off of server, loading default\n");
                     let image = UIImage(named: "default_portrait")
                     imageView.image = image
-                    imageView.contentMode = .ScaleAspectFit
+                    imageView.contentMode = .scaleAspectFit
                     self.contactDetailScrollView.addSubview(imageView)
                 }
             })
     }
     
-    private func getContactsListFromServerWithRelation() {
+    fileprivate func getContactsListFromServerWithRelation() {
         
         RESTEngine.sharedEngine.getContactGroupsWithContactId(contactRecord.id, success: { response in
             self.contactGroups.removeAll()
@@ -462,7 +462,7 @@ class ContactViewController: UIViewController {
                 let groupName = recordInfo["name"] as! String
                 self.contactGroups.append(groupName)
             }
-            dispatch_async(dispatch_get_main_queue()) {
+            DispatchQueue.main.async {
                 self.groupReady = true
                 self.groupLock.signal()
                 self.groupLock.unlock()
@@ -470,9 +470,9 @@ class ContactViewController: UIViewController {
 
             }, failure: { error in
                 NSLog("Error getting groups with relation: \(error)")
-                dispatch_async(dispatch_get_main_queue()) {
+                DispatchQueue.main.async {
                     Alert.showAlertWithMessage(error.errorMessage, fromViewController: self)
-                    self.navigationController?.popToRootViewControllerAnimated(true)
+                    _ = self.navigationController?.popToRootViewController(animated: true)
                 }
         })
     }
