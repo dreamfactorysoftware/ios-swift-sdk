@@ -11,12 +11,10 @@ import UIKit
 let kAppVersion = "1.0.1"
 
 // change kApiKey and kBaseInstanceUrl to match your app and instance
-private let kApiKey = "32548c8bf1937459f438324d5f5f7653a633c421b9b6fc057a588549d9b66233"
-let kBaseInstanceUrl = "https://ft-eje.vz2.dreamfactory.com/api/v2"
 
 // API key for your app goes here. See README.md or https://github.com/dreamfactorysoftware/ios-swift-sdk
-//private let kApiKey = ""
-//private let kBaseInstanceUrl = "http://localhost:8080/api/v2"
+private let kApiKey = ""
+private let kBaseInstanceUrl = "http://localhost:8080/api/v2"
 private let kSessionTokenKey = "SessionToken"
 private let kDbServiceName = "db/_table"
 private let kContainerName = "profile_images"
